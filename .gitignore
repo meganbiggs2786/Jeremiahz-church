@@ -1,0 +1,36 @@
+# Wrangler
+.wrangler/
+.dev.vars
+wrangler.toml.local
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build
+dist/
+build/
+
+# Temporary
+tmp/
+temp/

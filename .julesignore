@@ -1,0 +1,11 @@
+# Ignore mobile app related files
+**/expo/
+**/ios/
+**/android/
+**/.expo/
+**/node_modules/
+**/@types/
+**/react-native/
+
+# This is a Cloudflare Workers project
+# NOT a mobile app

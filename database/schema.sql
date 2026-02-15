@@ -51,10 +51,10 @@ CREATE TABLE IF NOT EXISTS categories (
 
 -- Insert categories
 INSERT INTO categories (name, slug, description) VALUES
-('Irish Apparel', 'irish-apparel', 'Celtic-inspired clothing'),
-('Mens Hygiene', 'mens-hygiene', 'Grooming and skincare'),
-('Handmade Bath', 'handmade-bath', 'Artisan soaps and bath'),
-('Bundles', 'bundles', 'Product combinations');
+('Urban Apparel', 'urban-apparel', 'Premium hoodies and tees'),
+('Athletic Wear', 'athletic-wear', 'Performance street style'),
+('Accessories', 'accessories', 'Urban essentials'),
+('Bundles', 'bundles', 'Streetwear collections');
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);

@@ -1,8 +1,8 @@
-# TUATH COIR
+# TUATH COIR TERRITORIES
 
 **Ancient Celtic Roots. Street Justice.**
 
-Premium Irish-themed e-commerce platform with men's grooming products and handmade bath items.
+Premium Irish-themed Urban Wear e-commerce platform featuring hoodies, athletic clothes, and hip-hop inspired streetwear.
 
 ## 🚀 Quick Start
 
@@ -44,10 +44,10 @@ wrangler deploy
 
 ## 📦 Products
 
-- **Irish Apparel** - Print-on-demand clothing ($24.99 - $49.99)
-- **Men's Hygiene** - Grooming kits ($29.99 - $49.99)
-- **Handmade Bath** - Artisan soaps ($9.99 - $19.99)
-- **Bundles** - High-profit combinations ($64.99 - $129.99)
+- **Urban Apparel** - Premium hoodies and tees ($24.99 - $49.99)
+- **Athletic Wear** - Performance-focused street style ($29.99 - $59.99)
+- **Accessories** - Hip-hop inspired hats and more ($19.99 - $34.99)
+- **Bundles** - Curated streetwear collections ($64.99 - $129.99)
 
 ## 🌐 API Endpoints
 

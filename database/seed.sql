@@ -1,34 +1,30 @@
 -- ═══════════════════════════════════════════════════════════════
 -- TUATH COIR - SEED DATA
--- Sample product catalog with exact pricing
+-- Urban Wear catalog with exact pricing
 -- ═══════════════════════════════════════════════════════════════
 
 INSERT INTO products (sku, name, description, category, price, cost_price, supplier, supplier_product_id, images) VALUES
 
--- IRISH APPAREL
-('TC-TSHIRT-001', 'Celtic Clover T-Shirt', 'Premium Bella+Canvas tee with Celtic clover design. Soft cotton, unisex fit. Available in Forest Green, Black, White.', 'Irish Apparel', 29.99, 12.95, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Celtic+Clover+Tee"]'),
+-- URBAN APPAREL (Streetwear focus)
+('TC-TSHIRT-001', 'Celtic Clover Street Tee', 'Heavyweight oversized tee with signature Celtic clover. Urban fit, premium 100% cotton. Available in Forest Green, Midnight Black, and Stone White.', 'Urban Apparel', 29.99, 12.95, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Celtic+Street+Tee"]'),
 
-('TC-HOODIE-001', 'Celtic Knot Hoodie', 'Cozy hoodie with intricate Celtic knot. Perfect for Irish pride. Soft fleece, kangaroo pocket.', 'Irish Apparel', 49.99, 28.50, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Celtic+Hoodie"]'),
+('TC-HOODIE-001', 'Celtic Knot Oversized Hoodie', 'Premium heavyweight hoodie with intricate Celtic knot embroidery. Hip-hop style oversized fit, soft fleece lining, kangaroo pocket.', 'Urban Apparel', 54.99, 28.50, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Celtic+Urban+Hoodie"]'),
 
-('TC-HAT-001', 'Shamrock Embroidered Hat', 'Classic snapback with shamrock and TC logo. Adjustable, one size fits most.', 'Irish Apparel', 24.99, 11.50, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Shamrock+Hat"]'),
+('TC-HAT-001', 'Shamrock Snapback Hat', 'Urban snapback with premium embroidered shamrock and TC monogram. Structured 6-panel design, classic street style.', 'Urban Apparel', 24.99, 11.50, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Shamrock+Snapback"]'),
 
--- MENS HYGIENE
-('TC-BEARD-001', 'Premium Beard Grooming Kit', '5-piece professional kit: oil, balm, brush, comb, scissors. Perfect for Irish gentlemen.', 'Mens Hygiene', 39.99, 15.50, 'EPROLO', 'EPROLO_ID_REPLACE', '["https://via.placeholder.com/500/8B4513/FFFFFF?text=Beard+Kit"]'),
+-- ATHLETIC WEAR (Performance Street Style)
+('TC-JOGGER-001', 'Street Justice Joggers', 'Performance tech fleece joggers with Celtic trim. Tapered urban fit, zip pockets, moisture-wicking fabric for the street or the gym.', 'Athletic Wear', 44.99, 22.00, 'EPROLO', 'EPROLO_ID_REPLACE', '["https://via.placeholder.com/500/222222/FFFFFF?text=Street+Joggers"]'),
 
-('TC-SKIN-001', 'Daily Skincare Set for Men', '4-step routine: cleanser, toner, moisturizer, eye cream. Natural ingredients.', 'Mens Hygiene', 34.99, 12.00, 'Zendrop', 'ZENDROP_ID_REPLACE', '["https://via.placeholder.com/500/4682B4/FFFFFF?text=Skincare+Set"]'),
+('TC-TANK-001', 'Celtic Performance Tank', 'Lightweight mesh tank with bold Celtic knot design. High-performance fabric with an urban athletic cut.', 'Athletic Wear', 26.99, 11.00, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Celtic+Tank"]'),
 
-('TC-TRAVEL-001', 'Travel Hygiene Kit', 'TSA-approved essentials in premium leather bag. Perfect for business trips.', 'Mens Hygiene', 29.99, 10.75, 'EPROLO', 'EPROLO_ID_REPLACE', '["https://via.placeholder.com/500/696969/FFFFFF?text=Travel+Kit"]'),
+('TC-JACKET-001', 'Urban Warrior Windbreaker', 'Water-resistant lightweight windbreaker with reflective Celtic accents. Perfect for night street style.', 'Athletic Wear', 59.99, 32.00, 'EPROLO', 'EPROLO_ID_REPLACE', '["https://via.placeholder.com/500/111111/FFFFFF?text=Warrior+Windbreaker"]'),
 
--- HANDMADE BATH
-('TC-SOAP-001', 'Irish Moss Soap', 'Handcrafted with real Irish moss. Ocean-fresh scent, deeply moisturizing. 4oz bar.', 'Handmade Bath', 9.99, 3.50, 'Faire', 'FAIRE_ID_REPLACE', '["https://via.placeholder.com/500/87CEEB/FFFFFF?text=Irish+Moss+Soap"]'),
+-- ACCESSORIES
+('TC-BAG-001', 'Celtic Roots Crossbody Bag', 'Durable urban crossbody bag with TC branding. Multiple compartments for everyday essentials.', 'Accessories', 34.99, 14.50, 'EPROLO', 'EPROLO_ID_REPLACE', '["https://via.placeholder.com/500/000000/FFFFFF?text=Celtic+Crossbody"]'),
 
-('TC-SOAP-002', 'Celtic Sea Salt Scrub Bar', 'Exfoliating soap with Celtic sea salt. Masculine cedar scent. Perfect for rough skin.', 'Handmade Bath', 11.99, 4.00, 'Faire', 'FAIRE_ID_REPLACE', '["https://via.placeholder.com/500/87CEEB/FFFFFF?text=Sea+Salt+Soap"]'),
-
-('TC-SOAP-003', 'Guinness Beer Soap', 'Made with REAL Guinness! Rich lather, moisturizing. Perfect Irish gift.', 'Handmade Bath', 13.99, 5.00, 'Faire', 'FAIRE_ID_REPLACE', '["https://via.placeholder.com/500/000000/FFFFFF?text=Guinness+Soap"]'),
-
-('TC-BATH-001', 'Celtic Sea Bath Soak', '16oz jar of Celtic sea minerals with eucalyptus and mint. 8-10 baths.', 'Handmade Bath', 19.99, 7.50, 'WholesaleBotanics', 'WB_ID_REPLACE', '["https://via.placeholder.com/500/4682B4/FFFFFF?text=Bath+Soak"]'),
+('TC-BEAR-OIL-001', 'Street Fresh Beard Oil', 'Premium beard oil for the urban gentleman. Woodsy scent with a hint of citrus. Keep your street style sharp.', 'Accessories', 19.99, 7.50, 'WholesaleBotanics', 'WB_ID_REPLACE', '["https://via.placeholder.com/500/8B4513/FFFFFF?text=Street+Beard+Oil"]'),
 
 -- BUNDLES
-('TC-BUNDLE-001', 'The Irish Gentleman', 'Celtic T-Shirt + Beard Kit. Everything the modern Irishman needs. Save $5!', 'Bundles', 64.99, 28.45, 'Multiple', 'BUNDLE_001', '["https://via.placeholder.com/500/006400/FFD700?text=Gentleman+Bundle"]'),
+('TC-BUNDLE-001', 'The Street King Bundle', 'Oversized Hoodie + Snapback Hat + Crossbody Bag. The ultimate urban outfit. Save $15!', 'Bundles', 99.99, 54.45, 'Multiple', 'BUNDLE_001', '["https://via.placeholder.com/500/006400/FFD700?text=Street+King+Bundle"]'),
 
-('TC-BUNDLE-002', 'Complete Grooming Collection', 'Skincare + Shaving + Hair products. Total transformation. Save $15!', 'Bundles', 89.99, 49.55, 'Multiple', 'BUNDLE_002', '["https://via.placeholder.com/500/8B4513/FFFFFF?text=Grooming+Bundle"]');
+('TC-BUNDLE-002', 'Urban Athlete Set', 'Performance Tank + Tech Joggers. High-performance style for the street. Save $10!', 'Bundles', 61.99, 33.00, 'Multiple', 'BUNDLE_002', '["https://via.placeholder.com/500/222222/FFFFFF?text=Urban+Athlete+Set"]');

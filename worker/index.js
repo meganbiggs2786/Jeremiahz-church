@@ -2,6 +2,8 @@
  * ═══════════════════════════════════════════════════════════════
  * TUATH COIR - COMPLETE E-COMMERCE PLATFORM
  * Phase 2: Payments + Admin + Order Management
+ * Brand Concept: Tuath Coir Territories
+ * Aesthetic: Ancient Celtic Roots + Urban Streetwear (Sword/Knot motif)
  * ═══════════════════════════════════════════════════════════════
  */
 
@@ -919,19 +921,120 @@ function getLandingPage() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TUATH COIR | Ancient Celtic Roots. Street Justice.</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Arial Black', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; margin:0; }
-        .logo { border: 3px solid #fff; width: 80px; height: 80px; line-height: 80px; font-size: 32px; margin: 0 auto 20px; }
-        h1 { letter-spacing: 12px; font-size: 24px; color: #ddd; margin-bottom: 10px; }
-        .tagline { color: #666; letter-spacing: 3px; font-size: 12px; margin-bottom: 40px; }
-        .btn { background: #fff; color: #000; padding: 15px 30px; border: none; font-weight: bold; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .logo {
+            border: 3px solid #fff;
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            font-size: 32px;
+            margin: 0 auto 20px;
+            display: inline-block;
+        }
+        h1 {
+            letter-spacing: 15px;
+            font-size: clamp(24px, 8vw, 42px);
+            color: #fff;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .tagline {
+            color: #888;
+            letter-spacing: 5px;
+            font-size: clamp(10px, 3vw, 14px);
+            margin-bottom: 50px;
+            font-weight: 300;
+        }
+        .btn {
+            background: #fff;
+            color: #000;
+            padding: 15px 30px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #006400;
+            color: #FFD700;
+        }
+        .footer {
+            color: #333;
+            font-size: 10px;
+            margin-top: 40px;
+            letter-spacing: 2px;
+        }
+        .api-info {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid #222;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #00ff00;
+            text-align: left;
+        }
+        .api-info h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+        .endpoint {
+            background: #0d0d0d;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
-    <div>
+    <div class="container">
         <div class="logo">TC</div>
         <h1>TUATH COIR</h1>
+        <p style="font-size: 10px; color: #888; letter-spacing: 10px; margin-bottom: 5px;">TERRITORIES</p>
         <p class="tagline">ANCIENT CELTIC ROOTS. STREET JUSTICE.</p>
-        <a href="/api/products" class="btn">VIEW PRODUCTS</a>
+
+        <div>
+            <a href="/api/products" class="btn">SHOP STREETWEAR</a>
+        </div>
+
+        <p class="footer">
+            URBAN APPAREL • ATHLETIC WEAR • HIP-HOP STYLE
+        </p>
+
+        <div class="api-info">
+            <h3>⚡ API ENDPOINTS (PHASE 2)</h3>
+            <div class="endpoint">GET /api/products → List all products</div>
+            <div class="endpoint">GET /api/products/:id → Single product details</div>
+            <div class="endpoint">GET /api/categories → Product categories</div>
+            <div class="endpoint">GET /health → System status</div>
+            <div class="endpoint">POST /api/orders → Create order</div>
+            <div class="endpoint">GET /admin → Dashboard (Megan & Joy)</div>
+
+            <p style="margin-top: 20px; color: #666;">
+                STATUS: Phase 2 - Fulfillment & Security ✅<br>
+                DATABASE: D1 Connected ✅<br>
+                PRODUCTS: 12 Loaded ✅
+            </p>
+        </div>
     </div>
 </body>
 </html>`;

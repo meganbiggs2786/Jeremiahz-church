@@ -86,6 +86,12 @@ export default {
         });
       }
 
+      if (path === '/initiation' && request.method === 'GET') {
+        return new Response(getInitiationPage(), {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' }
+        });
+      }
+
       // ═══════════════════════════════════════════════════════
       // PRODUCTS API
       // ═══════════════════════════════════════════════════════
@@ -147,6 +153,13 @@ export default {
 
       if (path === '/api/orders' && request.method === 'GET') {
         return await handleGetOrders(request, env, headers);
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // INITIATION API
+      // ═══════════════════════════════════════════════════════
+      if (path === '/api/initiation' && request.method === 'POST') {
+        return await handleInitiation(request, env, headers);
       }
 
       if (path.startsWith('/api/orders/') && request.method === 'GET') {
@@ -499,6 +512,55 @@ async function handleTrackOrder(request, env, headers, path) {
       updated_at: order.updated_at
     }
   }, null, 2), { headers });
+}
+
+async function handleInitiation(request, env, headers) {
+  try {
+    const data = await request.json();
+    const { name, email, territory, signature } = data;
+
+    if (!name || !email || !territory || !signature) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Incomplete initiation. All fields required.'
+      }), { status: 400, headers });
+    }
+
+    // Basic email check
+    if (!email.includes('@')) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid messenger details (email).'
+      }), { status: 400, headers });
+    }
+
+    // Save member
+    await env.DB.prepare(`
+      INSERT INTO members (name, email, territory, oath_version)
+      VALUES (?, ?, ?, ?)
+    `).bind(name, email, territory, 'v1-initiation').run();
+
+    console.log(`New initiate: ${name} in ${territory}`);
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: `Initiation complete. Welcome to the ${territory} Territory, ${name}.`,
+      tribe: 'Tuath Coir'
+    }), { status: 201, headers });
+
+  } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'You have already taken the oath.'
+      }), { status: 400, headers });
+    }
+    console.error('Initiation error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Initiation failed. The tribe awaits your return.'
+    }), { status: 500, headers });
+  }
 }
 
 async function handleGetOrders(request, env, headers) {
@@ -913,13 +975,117 @@ async function handleHealth(env, headers) {
   }, null, 2), { headers });
 }
 
+function getInitiationPage() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE INITIATION | Tuath Coir Territories</title>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .box { max-width: 500px; width: 100%; border: 1px solid #333; padding: 40px; background: #050505; }
+        h2 { letter-spacing: 5px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 20px; margin-bottom: 30px; }
+        label { display: block; margin-bottom: 10px; font-size: 12px; color: #888; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; background: #111; border: 1px solid #333; color: #fff; margin-bottom: 20px; }
+        .oath-box { background: #0a0a0a; padding: 20px; margin-bottom: 20px; border-left: 3px solid #006400; }
+        .oath-item { display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-start; }
+        .oath-item input { width: auto; margin: 0; margin-top: 3px; }
+        .oath-text { font-size: 14px; line-height: 1.5; color: #ccc; }
+        .btn { background: #fff; color: #000; padding: 15px; border: none; width: 100%; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn:disabled { background: #333; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>THE INITIATION</h2>
+        <form id="initiationForm">
+            <label>Your Name</label>
+            <input type="text" id="name" required placeholder="Name or Alias">
+
+            <label>Messenger ID (Email)</label>
+            <input type="email" id="email" required placeholder="email@address.com">
+
+            <label>Claim Your Territory</label>
+            <select id="territory" required>
+                <option value="">Select Territory...</option>
+                <option value="Highlands">The Highlands (Northern Reach)</option>
+                <option value="Urban Core">The Urban Core (Metropolis)</option>
+                <option value="Coastlands">The Coastlands (Western Edge)</option>
+                <option value="Midlands">The Midlands (Heartland)</option>
+            </select>
+
+            <div class="oath-box">
+                <div class="oath-item">
+                    <input type="checkbox" required>
+                    <span class="oath-text">I pledge to be true to who I am, unapologetically.</span>
+                </div>
+                <div class="oath-item">
+                    <input type="checkbox" required>
+                    <span class="oath-text">I will remain territorial over what is mine and my people.</span>
+                </div>
+                <div class="oath-item">
+                    <input type="checkbox" required>
+                    <span class="oath-text">I will contribute to building a just community of our own.</span>
+                </div>
+            </div>
+
+            <label>E-Signature (Type full name)</label>
+            <input type="text" id="signature" required placeholder="Type name to seal the oath">
+
+            <button type="submit" class="btn" id="submitBtn">Seal the Oath</button>
+        </form>
+
+        <script>
+            document.getElementById('initiationForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true;
+                btn.innerText = 'SEALING...';
+
+                const data = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    territory: document.getElementById('territory').value,
+                    signature: document.getElementById('signature').value
+                };
+
+                try {
+                    const response = await fetch('/api/initiation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert(result.message);
+                        window.location.href = '/';
+                    } else {
+                        alert(result.error);
+                        btn.disabled = false;
+                        btn.innerText = 'Seal the Oath';
+                    }
+                } catch (err) {
+                    alert('Initiation failed. The tribe awaits.');
+                    btn.disabled = false;
+                    btn.innerText = 'Seal the Oath';
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>`;
+}
+
 function getLandingPage() {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TUATH COIR | Ancient Celtic Roots. Street Justice.</title>
+    <title>TUATH COIR | Ancient Celtic Roots. Protect Your Own.</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -1010,13 +1176,15 @@ function getLandingPage() {
         <div class="logo">TC</div>
         <h1>TUATH COIR</h1>
         <p style="font-size: 10px; color: #888; letter-spacing: 10px; margin-bottom: 5px;">TERRITORIES</p>
-        <p class="tagline">ANCIENT CELTIC ROOTS. STREET JUSTICE.</p>
+        <p class="tagline">ANCIENT CELTIC ROOTS. PROTECT YOUR OWN.</p>
 
-        <div>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
             <a href="/api/products" class="btn">SHOP STREETWEAR</a>
+            <a href="/initiation" class="btn" style="background: transparent; border: 2px solid #fff; color: #fff;">TAKE THE OATH</a>
         </div>
 
         <p class="footer">
+            SMALL KINGDOM. UNIFIED TRIBE.<br>
             URBAN APPAREL • ATHLETIC WEAR • HIP-HOP STYLE
         </p>
 
@@ -1027,6 +1195,7 @@ function getLandingPage() {
             <div class="endpoint">GET /api/categories → Product categories</div>
             <div class="endpoint">GET /health → System status</div>
             <div class="endpoint">POST /api/orders → Create order</div>
+            <div class="endpoint">GET /initiation → Take the Oath</div>
             <div class="endpoint">GET /admin → Dashboard (Megan & Joy)</div>
 
             <p style="margin-top: 20px; color: #666;">

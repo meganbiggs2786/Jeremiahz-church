@@ -183,8 +183,39 @@ Create a Stripe Payment Intent for an order
 
 ---
 
+### GET /initiation
+Returns the initiation page (HTML)
+
+**Response:** HTML page where users take the oath to join the Tuath Coir tribe.
+
+---
+
+### POST /api/initiation
+Process a new tribal initiation (member registration)
+
+**Body:**
+```json
+{
+  "name": "Alias or Name",
+  "email": "messenger@example.com",
+  "territory": "Highlands | Urban Core | Coastlands | Midlands",
+  "signature": "E-Signature"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Initiation complete. Welcome to the Urban Core Territory, Alias.",
+  "tribe": "Tuath Coir"
+}
+```
+
+---
+
 ### GET /admin
-Admin Dashboard (requires Basic Auth)
+Admin Dashboard (requires Basic Auth via `ADMIN_PASSWORD_HASH`)
 
 ---
 
@@ -198,9 +229,9 @@ System health check
   "timestamp": "2024-01-01T00:00:00.000Z",
   "database": {
     "connected": true,
-    "products": 25
+    "products": 12
   },
   "environment": "production",
-  "version": "1.0.0-phase1"
+  "version": "2.0.0-phase2"
 }
 ```

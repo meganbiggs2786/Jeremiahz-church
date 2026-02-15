@@ -103,6 +103,7 @@ Run: `wrangler deploy`
 
 ## 🛠️ Testing Endpoints
 - **Landing Page:** `/`
+- **The Initiation:** `/initiation`
 - **Admin Dashboard:** `/admin`
 - **Products API:** `/api/products`
 - **Health Check:** `/health`

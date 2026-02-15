@@ -1,8 +1,8 @@
 # TUATH COIR TERRITORIES
 
-**Ancient Celtic Roots. Street Justice.**
+**Ancient Celtic Roots. Protect Your Own.**
 
-Premium Irish-themed Urban Wear e-commerce platform featuring hoodies, athletic clothes, and hip-hop inspired streetwear.
+Premium Irish-themed Urban Wear e-commerce platform featuring hoodies, athletic clothes, and hip-hop inspired streetwear. Built for the community, by the community.
 
 ## 🚀 Quick Start
 

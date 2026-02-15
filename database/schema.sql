@@ -56,6 +56,16 @@ INSERT INTO categories (name, slug, description) VALUES
 ('Accessories', 'accessories', 'Urban essentials'),
 ('Bundles', 'bundles', 'Streetwear collections');
 
+-- Members table (Initiates)
+CREATE TABLE IF NOT EXISTS members (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  territory TEXT NOT NULL,
+  oath_version TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_products_active ON products(is_active);

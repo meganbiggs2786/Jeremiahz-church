@@ -13,7 +13,7 @@ INSERT INTO products (sku, name, description, category, price, cost_price, suppl
 ('TC-HAT-001', 'Shamrock Snapback Hat', 'Urban snapback with premium embroidered shamrock and TC monogram. Structured 6-panel design, classic street style.', 'Urban Apparel', 24.99, 11.50, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Shamrock+Snapback"]'),
 
 -- ATHLETIC WEAR (Performance Street Style)
-('TC-JOGGER-001', 'Street Justice Joggers', 'Performance tech fleece joggers with Celtic trim. Tapered urban fit, zip pockets, moisture-wicking fabric for the street or the gym.', 'Athletic Wear', 44.99, 22.00, 'EPROLO', 'EPROLO_ID_REPLACE', '["https://via.placeholder.com/500/222222/FFFFFF?text=Street+Joggers"]'),
+('TC-JOGGER-001', 'Tribe Defense Joggers', 'Performance tech fleece joggers with Celtic trim. Tapered urban fit, zip pockets, moisture-wicking fabric for the street or the gym.', 'Athletic Wear', 44.99, 22.00, 'EPROLO', 'EPROLO_ID_REPLACE', '["https://via.placeholder.com/500/222222/FFFFFF?text=Tribe+Defense+Joggers"]'),
 
 ('TC-TANK-001', 'Celtic Performance Tank', 'Lightweight mesh tank with bold Celtic knot design. High-performance fabric with an urban athletic cut.', 'Athletic Wear', 26.99, 11.00, 'Printful', 'PRINTFUL_ID_REPLACE', '["https://via.placeholder.com/500/006400/FFFFFF?text=Celtic+Tank"]'),
 

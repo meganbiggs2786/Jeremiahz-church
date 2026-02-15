@@ -8,7 +8,7 @@ set -e  # Exit on error
 
 echo "╔════════════════════════════════════════════════════════╗"
 echo "║      TUATH COIR - AUTOMATED DEPLOYMENT                ║"
-echo "║      Ancient Celtic Roots. Street Justice.            ║"
+echo "║      Ancient Celtic Roots. Protect Your Own.          ║"
 echo "╚════════════════════════════════════════════════════════╝"
 echo ""
 

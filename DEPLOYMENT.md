@@ -1,228 +1,108 @@
 # DEPLOYMENT GUIDE - TUATH COIR
 
-## Prerequisites
+## 🚀 COMPLETE DEPLOYMENT GUIDE
 
-1. **Cloudflare Account** (free tier)
-   - Sign up at: https://dash.cloudflare.com/sign-up
+### STEP 1: Repository Setup
+Ensure all files are in your repository:
+- `worker/index.js` (The core API logic)
+- `database/schema.sql` (Database structure)
+- `database/seed.sql` (Initial product data)
+- `wrangler.toml` (Cloudflare configuration)
 
-2. **Node.js 18+**
-   - Check: `node --version`
-   - Install from: https://nodejs.org
+### STEP 2: Create Cloudflare Worker
+1. Go to: [dash.cloudflare.com](https://dash.cloudflare.com)
+2. **Workers & Pages** → **Create Worker**
+3. Name it: `tuath-coir-api` (or your preferred name)
+4. Deploy the default code first to initialize.
 
-3. **Wrangler CLI**
-   ```bash
-   npm install -g wrangler
-   ```
+### STEP 3: Setup D1 Database
+1. Run: `wrangler d1 create tuath_coir_db`
+2. Copy the `database_id` from the output.
+3. Update `wrangler.toml` with this ID.
+4. Create tables: `wrangler d1 execute tuath_coir_db --file=database/schema.sql`
+5. Seed products: `wrangler d1 execute tuath_coir_db --file=database/seed.sql`
 
-## Step-by-Step Deployment
+### STEP 4: Environment Variables & Secrets
+In Cloudflare Dashboard (**Settings** → **Variables**) or via CLI, add the following:
 
-### Step 1: Clone Repository
+**Environment Variables (Plain Text):**
+- `STORE_NAME` = `Tuath Coir`
+- `SUPPORT_EMAIL` = `support@tuathcoir.com`
+- `NODE_ENV` = `production`
 
-```bash
-git clone https://github.com/YOUR-USERNAME/tuath-coir.git
-cd tuath-coir
-```
+**Secrets (Encrypted):**
+- `ADMIN_USERNAME` = `admin` (or your choice)
+- `ADMIN_PASSWORD_HASH` = `[SHA-256 hash of your password]`
+- `STRIPE_SECRET_KEY` = `[from Stripe dashboard]`
+- `STRIPE_PUBLISHABLE_KEY` = `[from Stripe dashboard]`
+- `STRIPE_WEBHOOK_SECRET` = `[from Stripe dashboard after Step 6]`
+- `JWT_SECRET` = `[create a long random string for Phase 3]`
+- `PRINTFUL_API_KEY` = `[from Printful settings]`
+- `EPROLO_API_KEY` = `[from EPROLO settings]`
+- `ZENDROP_API_KEY` = `[from Zendrop settings]`
+- `FAIRE_API_TOKEN` = `[from Faire settings]`
 
-### Step 2: Login to Cloudflare
+> **Note:** Use `node scripts/generate-hash.js yourpassword` to generate the password hash.
 
-```bash
-wrangler login
-```
+### STEP 5: Connect Database Binding
+1. In Cloudflare Worker settings → **Settings** → **Bindings**.
+2. Click **Add Binding** → **D1 Database**.
+3. Variable name: `DB`
+4. D1 Database: Select `tuath_coir_db`.
+5. **Save and Deploy**.
 
-This opens a browser for authentication.
+### STEP 6: Configure Webhooks
 
-### Step 3: Create D1 Database
+**Stripe:**
+1. Stripe Dashboard → **Developers** → **Webhooks**.
+2. URL: `https://tuath-coir-api.YOUR-USERNAME.workers.dev/api/webhooks/stripe`
+3. Events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.dispute.created`.
+4. Copy Signing Secret and add to `STRIPE_WEBHOOK_SECRET`.
 
-```bash
-wrangler d1 create tuath_coir_db
-```
+**Printful:**
+1. Printful Dashboard → **Settings** → **Webhooks**.
+2. URL: `https://tuath-coir-api.YOUR-USERNAME.workers.dev/api/webhooks/printful`
+3. Events: `package_shipped`, `order_failed` (Select "All" for full coverage).
 
-**Important:** Copy the `database_id` from the output.
+### STEP 7: Deploy Worker
+Run: `wrangler deploy`
 
-Example output:
-```
-✅ Successfully created DB 'tuath_coir_db'
+---
 
-[[d1_databases]]
-binding = "DB"
-database_name = "tuath_coir_db"
-database_id = "abc123-def456-ghi789"  ← COPY THIS
-```
+## ✅ THE $0 TO LAUNCH CHECKLIST
+- [ ] Database created and products inserted.
+- [ ] Worker deployed and live.
+- [ ] Printful account connected (templates made).
+- [ ] EPROLO/Supplier products selected.
+- [ ] Stripe account activated.
+- [ ] Webhooks configured.
+- [ ] Admin access working for Megan & Joy.
+- [ ] Landing page live and visible.
 
-### Step 4: Update wrangler.toml
+---
 
-Open `wrangler.toml` and replace `YOUR_DATABASE_ID_HERE` with the ID from Step 3.
+## 📈 MARKETING EXECUTION (Your $0 Strategy)
 
-```toml
-[[ d1_databases ]]
-binding = "DB"
-database_name = "tuath_coir_db"
-database_id = "abc123-def456-ghi789"  # ← YOUR ID HERE
-```
+### Week 1-2: Build Awareness
+- Post 3x daily on TikTok/Reels: "Building Tuath Coir from scratch."
+- Show product designs, supplier process, and the brand story.
+- **Call to Action:** "Join the Tribe" → Link to your site.
 
-### Step 5: Create Database Tables
+### Week 3-4: Launch & Verify
+- Launch the store.
+- Perform a first $1 test order (buy from yourself).
+- Verify the order flows to Printful/EPROLO correctly.
+- Confirm money hits your bank account.
 
-```bash
-wrangler d1 execute tuath_coir_db --file=database/schema.sql
-```
+### Month 2+: Scale
+- Scale winning content.
+- Add new products based on what sells.
+- Reinvest profit into inventory (if moving away from dropshipping later).
 
-Expected output:
-```
-🌀 Executing on tuath_coir_db (abc123-def456-ghi789):
-🌀 To execute on your remote database, add a --remote flag to your wrangler command.
-✅ Success!
-```
+---
 
-### Step 6: Seed Database with Products
-
-```bash
-wrangler d1 execute tuath_coir_db --file=database/seed.sql
-```
-
-Expected output:
-```
-✅ 12 rows inserted
-```
-
-### Step 7: Deploy Worker
-
-```bash
-wrangler deploy
-```
-
-Expected output:
-```
-⛅️ wrangler 3.x.x
-------------------
-Your worker has been deployed:
-🌏 https://tuath-coir-api.YOUR-ACCOUNT.workers.dev
-```
-
-### Step 8: Test Deployment
-
-Visit your Worker URL:
-```
-https://tuath-coir-api.YOUR-ACCOUNT.workers.dev
-```
-
-**Test endpoints:**
-
-1. Landing page:
-   ```
-   https://tuath-coir-api.YOUR-ACCOUNT.workers.dev/
-   ```
-
-2. Products API:
-   ```
-   https://tuath-coir-api.YOUR-ACCOUNT.workers.dev/api/products
-   ```
-
-3. Health check:
-   ```
-   https://tuath-coir-api.YOUR-ACCOUNT.workers.dev/health
-   ```
-
-## Troubleshooting
-
-### Issue: "Database not found"
-
-**Solution:**
-```bash
-# List your databases
-wrangler d1 list
-
-# Verify database_id in wrangler.toml matches
-```
-
-### Issue: "Worker deployed but shows error"
-
-**Solution:**
-```bash
-# Check logs
-wrangler tail
-
-# Verify database binding
-wrangler d1 info tuath_coir_db
-```
-
-### Issue: "Cannot find module"
-
-**Solution:**
-Make sure you're in the project root directory:
-```bash
-pwd  # Should show: /path/to/tuath-coir
-ls   # Should show: wrangler.toml, worker/, database/
-```
-
-## Environment Variables
-
-**Phase 1:** No environment variables needed.
-
-**Phase 2:** Will add these via Cloudflare dashboard:
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD_HASH`
-- `STRIPE_SECRET_KEY`
-- `PRINTFUL_API_KEY`
-- `EPROLO_API_KEY`
-
-## Updating the Worker
-
-After making changes:
-
-```bash
-# Deploy updates
-wrangler deploy
-
-# View live logs
-wrangler tail
-```
-
-## Rolling Back
-
-```bash
-# List deployments
-wrangler deployments list
-
-# Rollback to previous version
-wrangler rollback [deployment-id]
-```
-
-## Local Development
-
-```bash
-# Run locally
-wrangler dev
-
-# Access at: http://localhost:8787
-```
-
-## Production Checklist
-
-Before going live:
-
-- [ ] Database deployed and seeded
-- [ ] Worker deployed successfully
-- [ ] All API endpoints tested
-- [ ] Health check returns "OK"
-- [ ] Products load correctly
-- [ ] Custom domain configured (optional)
-
-## Custom Domain (Optional)
-
-1. Add domain in Cloudflare dashboard
-2. Go to Workers & Pages → tuath-coir-api → Settings
-3. Add custom domain: `api.tuathcoir.com`
-4. Update DNS records as instructed
-
-## Support
-
-For issues, contact project maintainers or check:
-- Cloudflare Workers docs: https://developers.cloudflare.com/workers/
-- D1 Database docs: https://developers.cloudflare.com/d1/
-
-## Next Steps
-
-After successful deployment:
-- Proceed to Phase 2: Payments & Admin Dashboard
-- Set up Stripe account
-- Configure supplier APIs (Printful, EPROLO)
+## 🛠️ Testing Endpoints
+- **Landing Page:** `/`
+- **Admin Dashboard:** `/admin`
+- **Products API:** `/api/products`
+- **Health Check:** `/health`

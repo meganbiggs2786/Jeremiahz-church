@@ -35,6 +35,10 @@ Relational database storing products, categories, and orders. Provides ACID comp
 5. **Response:** Worker returns JSON to client with CORS headers.
 
 ## Security
-- CORS protection for API endpoints.
-- Environment variables for sensitive API keys.
-- SQL parameter binding to prevent injection.
+Tuath Coir implements multi-layered security including:
+- **SSL/HTTPS:** Automatic encryption for all traffic.
+- **PCI Compliance:** Bank-grade payment security via Stripe.
+- **DDoS/Fraud:** Enterprise-level protection from Cloudflare and Stripe Radar.
+- **Data Safety:** Parameterized SQL queries to prevent injection.
+
+For full details, see the [Security Documentation](./SECURITY.md).

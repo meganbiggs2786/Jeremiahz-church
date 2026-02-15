@@ -5,10 +5,49 @@
  * ═══════════════════════════════════════════════════════════════
  */
 
+// ═══════════════════════════════════════════════════════════════
+// RATE LIMITER
+// ═══════════════════════════════════════════════════════════════
+
+const rateLimiter = {
+  // Note: Memory is per-isolate. For global rate limiting, use Cloudflare KV.
+  requests: new Map(),
+
+  async check(ip) {
+    if (!ip) return true; // Skip if no IP (local testing)
+
+    const now = Date.now();
+    const windowMs = 60000; // 1 minute
+    const maxRequests = 100; // 100 requests per minute
+
+    if (!this.requests.has(ip)) {
+      this.requests.set(ip, []);
+    }
+
+    const requests = this.requests.get(ip);
+
+    // Remove old requests outside window
+    const recent = requests.filter(time => now - time < windowMs);
+
+    if (recent.length >= maxRequests) {
+      return false; // Rate limit exceeded
+    }
+
+    recent.push(now);
+    this.requests.set(ip, recent);
+    return true; // Allowed
+  }
+};
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    // GAP 5: Force HTTPS in production
+    if (url.protocol !== 'https:' && env.NODE_ENV === 'production') {
+      return Response.redirect('https://' + url.hostname + url.pathname, 301);
+    }
 
     const headers = {
       'Access-Control-Allow-Origin': '*',
@@ -19,6 +58,20 @@ export default {
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers });
+    }
+
+    // Apply Rate Limiting
+    const clientIP = request.headers.get('CF-Connecting-IP');
+    const allowed = await rateLimiter.check(clientIP);
+
+    if (!allowed) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Too many requests. Please slow down.'
+      }), {
+        status: 429,
+        headers
+      });
     }
 
     try {
@@ -54,7 +107,40 @@ export default {
       // ORDERS API
       // ═══════════════════════════════════════════════════════
       if (path === '/api/orders' && request.method === 'POST') {
-        return await handleCreateOrder(request, env, headers);
+        let orderData;
+        try {
+          orderData = await request.json();
+        } catch {
+          return new Response(JSON.stringify({ error: 'Invalid JSON data' }), { status: 400, headers });
+        }
+
+        const errors = [];
+        if (!orderData.customer_email?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+          errors.push('Invalid email address');
+        }
+        if (!orderData.shipping_address?.postal_code) {
+          errors.push('Missing postal code');
+        }
+        if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+          errors.push('Order must contain at least one item');
+        }
+        orderData.items?.forEach((item, index) => {
+          if (!Number.isInteger(item.product_id) || item.product_id <= 0) {
+            errors.push(`Invalid product_id at item ${index}`);
+          }
+          if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 999) {
+            errors.push(`Invalid quantity at item ${index} (must be 1-999)`);
+          }
+        });
+
+        if (errors.length > 0) {
+          return new Response(JSON.stringify({ error: 'Validation failed', details: errors }), { status: 400, headers });
+        }
+
+        orderData.customer_name = orderData.customer_name?.replace(/[<>]/g, '').trim();
+        orderData.customer_email = orderData.customer_email?.toLowerCase().trim();
+
+        return await handleCreateOrder(request, env, headers, orderData);
       }
 
       if (path === '/api/orders' && request.method === 'GET') {
@@ -73,13 +159,36 @@ export default {
       }
 
       if (path === '/api/webhooks/stripe' && request.method === 'POST') {
-        return await handleStripeWebhook(request, env, headers);
+        return await handleStripeWebhook(request, env, ctx, headers);
+      }
+
+      if (path === '/api/webhooks/printful' && request.method === 'POST') {
+        return await handlePrintfulWebhook(request, env, headers);
       }
 
       // ═══════════════════════════════════════════════════════
       // ADMIN DASHBOARD
       // ═══════════════════════════════════════════════════════
       if (path.startsWith('/admin')) {
+        const authHeader = request.headers.get('Authorization');
+
+        if (!authHeader || !authHeader.startsWith('Basic ')) {
+          return new Response('Unauthorized', {
+            status: 401,
+            headers: { ...headers, 'WWW-Authenticate': 'Basic realm="Admin"', 'Content-Type': 'text/html' }
+          });
+        }
+
+        const credentials = atob(authHeader.split(' ')[1]);
+        const [username, password] = credentials.split(':');
+        const hashedPassword = await hashPassword(password);
+
+        if (username !== env.ADMIN_USERNAME || hashedPassword !== env.ADMIN_PASSWORD_HASH) {
+          console.warn(`Failed admin login attempt from ${clientIP}`);
+          return new Response('Invalid credentials', { status: 401, headers: { ...headers, 'Content-Type': 'text/html' } });
+        }
+
+        console.info(`Admin login successful: ${username} from ${clientIP}`);
         return await handleAdmin(request, env, headers, path);
       }
 
@@ -96,12 +205,26 @@ export default {
       }), { status: 404, headers });
 
     } catch (error) {
-      console.error('Error:', error);
-      return new Response(JSON.stringify({
+      // SECURITY LAYER 6: SAFE ERROR HANDLING
+      console.error('Server error:', error);
+
+      const errorResponse = {
         success: false,
-        error: 'Internal server error',
-        message: env.NODE_ENV === 'development' ? error.message : undefined
-      }), { status: 500, headers });
+        error: 'An unexpected error occurred',
+        request_id: crypto.randomUUID()
+      };
+
+      if (env.NODE_ENV === 'development') {
+        errorResponse.debug = {
+          message: error.message,
+          stack: error.stack
+        };
+      }
+
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
     }
   }
 };
@@ -232,17 +355,8 @@ async function handleSearch(request, env, headers) {
 // ORDER HANDLERS
 // ═══════════════════════════════════════════════════════════════
 
-async function handleCreateOrder(request, env, headers) {
+async function handleCreateOrder(request, env, headers, orderData) {
   try {
-    const orderData = await request.json();
-
-    // Validate
-    if (!orderData.items || !orderData.customer_email || !orderData.shipping_address) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Missing required fields'
-      }), { status: 400, headers });
-    }
 
     // Calculate totals
     let subtotal = 0;
@@ -493,9 +607,17 @@ async function handleCreatePaymentIntent(request, env, headers) {
   }
 }
 
-async function handleStripeWebhook(request, env, headers) {
+async function handleStripeWebhook(request, env, ctx, headers) {
   try {
-    const event = await request.json();
+    const signature = request.headers.get('stripe-signature');
+    const body = await request.text();
+
+    if (env.STRIPE_WEBHOOK_SECRET && !await verifyStripeSignature(body, signature, env.STRIPE_WEBHOOK_SECRET)) {
+      console.error('Invalid Stripe signature');
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400, headers });
+    }
+
+    const event = JSON.parse(body);
     console.log('Stripe webhook received:', event.type);
 
     switch (event.type) {
@@ -512,6 +634,15 @@ async function handleStripeWebhook(request, env, headers) {
             WHERE order_number = ?
           `).bind(new Date().toISOString(), orderNumber).run();
           console.log(`Order ${orderNumber} marked as paid`);
+
+          // Trigger Auto-fulfillment
+          const order = await env.DB.prepare(
+            'SELECT * FROM orders WHERE order_number = ?'
+          ).bind(orderNumber).first();
+
+          if (order) {
+            ctx.waitUntil(fulfillOrder(JSON.parse(order.order_data), env));
+          }
         }
         break;
 
@@ -537,30 +668,139 @@ async function handleStripeWebhook(request, env, headers) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// AUTO-FULFILLMENT HANDLERS
+// ═══════════════════════════════════════════════════════════════
+
+async function fulfillOrder(order, env) {
+  const items = order.items || [];
+
+  // Group items by supplier
+  const supplierGroups = items.reduce((acc, item) => {
+    if (!acc[item.supplier]) acc[item.supplier] = [];
+    acc[item.supplier].push(item);
+    return acc;
+  }, {});
+
+  console.log(`Fulfilling order ${order.order_number} across ${Object.keys(supplierGroups).length} suppliers`);
+
+  // Send to Printful
+  if (supplierGroups.Printful?.length > 0 && env.PRINTFUL_API_KEY) {
+    await sendToPrintful(order, supplierGroups.Printful, env);
+  }
+
+  // Send to EPROLO
+  if (supplierGroups.EPROLO?.length > 0 && env.EPROLO_API_KEY) {
+    await sendToEprolo(order, supplierGroups.EPROLO, env);
+  }
+
+  // Send to Zendrop
+  if (supplierGroups.Zendrop?.length > 0 && env.ZENDROP_API_KEY) {
+    await sendToZendrop(order, supplierGroups.Zendrop, env);
+  }
+}
+
+async function sendToPrintful(order, items, env) {
+  try {
+    const response = await fetch('https://api.printful.com/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.PRINTFUL_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        external_id: order.order_number,
+        recipient: {
+          name: order.customer_name,
+          address1: order.shipping_address.line1,
+          city: order.shipping_address.city,
+          state_code: order.shipping_address.state,
+          country_code: 'US',
+          zip: order.shipping_address.postal_code,
+          email: order.customer_email
+        },
+        items: items.map(item => ({
+          sync_variant_id: item.supplier_product_id,
+          quantity: item.quantity
+        }))
+      })
+    });
+
+    const result = await response.json();
+    console.log('Printful response:', JSON.stringify(result));
+  } catch (error) {
+    console.error('Printful error:', error);
+  }
+}
+
+async function sendToEprolo(order, items, env) {
+  try {
+    const response = await fetch('https://api.eprolo.com/api/order/create', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.EPROLO_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        orderNum: order.order_number,
+        consignee: order.customer_name,
+        address: order.shipping_address.line1,
+        city: order.shipping_address.city,
+        province: order.shipping_address.state,
+        country: 'US',
+        zipCode: order.shipping_address.postal_code,
+        email: order.customer_email,
+        products: items.map(item => ({
+          productId: item.supplier_product_id,
+          quantity: item.quantity
+        }))
+      })
+    });
+    const result = await response.json();
+    console.log('EPROLO response:', JSON.stringify(result));
+  } catch (error) {
+    console.error('EPROLO error:', error);
+  }
+}
+
+async function sendToZendrop(order, items, env) {
+  console.log(`Manual fulfillment required for Zendrop items in order ${order.order_number}`);
+}
+
+async function handlePrintfulWebhook(request, env, headers) {
+  try {
+    const event = await request.json();
+    console.log('Printful webhook:', event.type);
+
+    if (event.type === 'package_shipped') {
+      const orderNumber = event.data.order.external_id;
+      const trackingNumber = event.data.shipment.tracking_number;
+      const trackingUrl = event.data.shipment.tracking_url;
+
+      await env.DB.prepare(`
+        UPDATE orders
+        SET fulfillment_status = 'shipped',
+            tracking_number = ?,
+            tracking_url = ?,
+            updated_at = ?
+        WHERE order_number = ?
+      `).bind(trackingNumber, trackingUrl, new Date().toISOString(), orderNumber).run();
+
+      console.log(`Order ${orderNumber} marked as shipped with tracking ${trackingNumber}`);
+    }
+
+    return new Response(JSON.stringify({ received: true }), { headers });
+  } catch (error) {
+    console.error('Printful webhook error:', error);
+    return new Response(JSON.stringify({ error: 'Webhook failed' }), { status: 500, headers });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ADMIN HANDLERS
 // ═══════════════════════════════════════════════════════════════
 
 async function handleAdmin(request, env, headers, path) {
-  const authHeader = request.headers.get('Authorization');
-
-  if (!authHeader || !authHeader.startsWith('Basic ')) {
-    return new Response('Unauthorized', {
-      status: 401,
-      headers: { ...headers, 'WWW-Authenticate': 'Basic realm="Admin"', 'Content-Type': 'text/plain' }
-    });
-  }
-
-  const credentials = atob(authHeader.split(' ')[1]);
-  const [username, password] = credentials.split(':');
-
-  const validUsername = env.ADMIN_USERNAME || 'admin';
-  const hashedPassword = await hashPassword(password);
-
-  if (!env.ADMIN_PASSWORD_HASH || username !== validUsername || hashedPassword !== env.ADMIN_PASSWORD_HASH) {
-    return new Response('Forbidden', { status: 403, headers });
-  }
-
-  // Basic Admin Dashboard
+  // Admin logic (Auth already checked in fetch handler)
   const { results: orders } = await env.DB.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all();
 
   let ordersHtml = orders.map(o => `
@@ -611,6 +851,48 @@ async function handleAdmin(request, env, headers, path) {
 // ═══════════════════════════════════════════════════════════════
 // HELPERS & HEALTH
 // ═══════════════════════════════════════════════════════════════
+
+async function verifyStripeSignature(body, signature, secret) {
+  if (!signature || !secret) return false;
+
+  try {
+    const parts = signature.split(',').reduce((acc, part) => {
+      const [key, value] = part.split('=');
+      acc[key] = value;
+      return acc;
+    }, {});
+
+    const timestamp = parts['t'];
+    const v1 = parts['v1'];
+
+    if (!timestamp || !v1) return false;
+
+    const signedPayload = `${timestamp}.${body}`;
+    const encoder = new TextEncoder();
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const signatureBuffer = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(signedPayload)
+    );
+
+    const hashArray = Array.from(new Uint8Array(signatureBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    return hashHex === v1;
+  } catch (error) {
+    console.error('Signature verification error:', error);
+    return false;
+  }
+}
 
 async function hashPassword(password) {
   const msgUint8 = new TextEncoder().encode(password);

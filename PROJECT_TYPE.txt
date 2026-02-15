@@ -1,0 +1,56 @@
+═══════════════════════════════════════════════════════════════
+TUATH COIR - PROJECT TYPE DECLARATION
+═══════════════════════════════════════════════════════════════
+
+PROJECT TYPE: Cloudflare Workers Backend API
+
+THIS IS:
+✓ Serverless API (Cloudflare Workers)
+✓ SQL Database (D1 - SQLite)
+✓ REST API endpoints
+✓ JavaScript (ES6 modules)
+✓ Edge-deployed globally
+✓ Backend only (Phase 1)
+
+THIS IS NOT:
+✗ React Native app
+✗ Expo project
+✗ Mobile application
+✗ Next.js app
+✗ tRPC project
+✗ Frontend application (yet)
+
+DEPLOYMENT TARGET: Cloudflare Workers
+LANGUAGE: JavaScript
+RUNTIME: V8 (Cloudflare Workers)
+DATABASE: D1 (SQLite)
+DEPENDENCIES: None (built-in Workers runtime)
+
+FILES TO DEPLOY:
+1. wrangler.toml (configuration)
+2. worker/index.js (API backend)
+3. database/schema.sql (database structure)
+4. database/seed.sql (initial data)
+
+IGNORE REFERENCES TO:
+- SettingsScreen
+- useAuth hooks
+- FlatList components
+- React Native
+- Expo Router
+- @/components/*
+- @/hooks/*
+- Mobile UI
+
+IF YOU SEE MOBILE APP CODE:
+You're looking at the wrong project.
+This is a serverless backend API.
+
+DEPLOYMENT PLATFORM: Cloudflare
+HOSTING: Edge network (150+ locations)
+COST: $0 (free tier)
+
+CURRENT PHASE: Phase 1 - Foundation
+NEXT PHASE: Phase 2 - Payments & Admin
+
+═══════════════════════════════════════════════════════════════

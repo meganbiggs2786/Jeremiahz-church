@@ -114,6 +114,80 @@ GET /api/search?q=Clover
 
 ---
 
+### POST /api/orders
+Create a new order
+
+**Body:**
+```json
+{
+  "customer_email": "customer@example.com",
+  "customer_name": "John Doe",
+  "customer_phone": "555-0123",
+  "shipping_address": {
+    "line1": "123 Main St",
+    "city": "Dublin",
+    "state": "CA",
+    "postal_code": "94568",
+    "country": "US"
+  },
+  "items": [
+    {
+      "product_id": 1,
+      "quantity": 2
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "order_number": "TC1234567890ABCD",
+  "total": "65.97",
+  "profit": "32.41",
+  "message": "Order created successfully. Proceed to payment."
+}
+```
+
+---
+
+### GET /api/orders/:order_number
+Track an existing order
+
+**Response:**
+```json
+{
+  "success": true,
+  "order": {
+    "order_number": "TC1234567890ABCD",
+    "status": "pending_payment",
+    "payment_status": "unpaid",
+    ...
+  }
+}
+```
+
+---
+
+### POST /api/payment/create-intent
+Create a Stripe Payment Intent for an order
+
+**Body:**
+```json
+{
+  "order_number": "TC1234567890ABCD",
+  "amount": "65.97"
+}
+```
+
+---
+
+### GET /admin
+Admin Dashboard (requires Basic Auth)
+
+---
+
 ### GET /health
 System health check
 

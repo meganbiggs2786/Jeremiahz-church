@@ -11,3 +11,15 @@ database_id = "YOUR_DATABASE_ID_HERE"  # Replace with actual ID after creating d
 # Environment Variables
 [vars]
 NODE_ENV = "production"
+STORE_NAME = "Tuath Coir"
+SUPPORT_EMAIL = "support@tuathcoir.com"
+
+# Secrets to be set via: wrangler secret put <NAME>
+# - ADMIN_USERNAME
+# - ADMIN_PASSWORD_HASH
+# - STRIPE_SECRET_KEY
+# - STRIPE_PUBLISHABLE_KEY
+# - STRIPE_WEBHOOK_SECRET
+# - PRINTFUL_API_KEY
+# - EPROLO_API_KEY
+# - ZENDROP_API_KEY

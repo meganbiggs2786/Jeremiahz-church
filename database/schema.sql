@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS orders (
   profit_amount REAL,
   tracking_number TEXT,
   tracking_url TEXT,
+  stripe_payment_id TEXT,
+  stripe_customer_id TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );

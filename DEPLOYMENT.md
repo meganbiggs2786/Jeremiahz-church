@@ -1,10 +1,15 @@
 # DEPLOYMENT GUIDE - TUATH COIR
 
-## 🚀 COMPLETE DEPLOYMENT GUIDE
+This repository contains the full stack for Tuath Coir:
+1. **Backend**: Cloudflare Worker + D1 Database
+2. **Web Storefront**: React + Vite (deployed to Cloudflare Pages)
+3. **Owner App**: Expo / React Native (for mobile management)
+
+## 🚀 BACKEND DEPLOYMENT (Cloudflare Worker)
 
 ### STEP 1: Repository Setup
 Ensure all files are in your repository:
-- `worker/index.js` (The core API logic)
+- `worker/` (The core API logic and tRPC router)
 - `database/schema.sql` (Database structure)
 - `database/seed.sql` (Initial product data)
 - `wrangler.toml` (Cloudflare configuration)
@@ -66,6 +71,47 @@ In Cloudflare Dashboard (**Settings** → **Variables**) or via CLI, add the fol
 
 ### STEP 7: Deploy Worker
 Run: `wrangler deploy`
+
+---
+
+## 🌐 WEB STOREFRONT DEPLOYMENT (Cloudflare Pages)
+
+### STEP 1: Build the Frontend
+1. Navigate to the `frontend` directory: `cd frontend`
+2. Install dependencies: `npm install`
+3. Create a `.env` file with: `VITE_API_URL=https://tuath-coir-api.YOUR-USERNAME.workers.dev`
+4. Build: `npm run build`
+
+### STEP 2: Deploy to Pages
+1. Go to Cloudflare Dashboard → **Workers & Pages** → **Create application** → **Pages**.
+2. **Connect to Git** or **Upload assets**.
+3. If uploading, drag and drop the `frontend/dist` folder.
+4. If using Git:
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+   - Root directory: `frontend`
+
+---
+
+## 📱 OWNER APP DEPLOYMENT (Expo Mobile)
+
+### STEP 1: Configure tRPC URL
+1. Open `mobile/app/_layout.tsx`.
+2. Update the `url` in `httpBatchLink` to your deployed Worker URL:
+   `https://tuath-coir-api.YOUR-USERNAME.workers.dev/trpc`
+
+### STEP 2: Preview with Expo Go
+1. `cd mobile`
+2. `npm install`
+3. `npx expo start`
+4. Scan the QR code with your phone (using the Expo Go app).
+
+### STEP 3: Build for Production (EAS)
+1. Install EAS CLI: `npm install -g eas-cli`
+2. Login: `eas login`
+3. Configure project: `eas build:configure`
+4. Build for Android: `eas build --platform android`
+5. Build for iOS: `eas build --platform ios`
 
 ---
 

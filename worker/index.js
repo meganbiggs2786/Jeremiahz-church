@@ -42,7 +42,7 @@ const rateLimiter = {
 };
 
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { appRouter, createContext } from './trpc.js';
+import { appRouter, createContext } from './trpc';
 
 export default {
   async fetch(request, env, ctx) {

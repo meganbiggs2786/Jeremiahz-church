@@ -14,25 +14,31 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#000',
-          borderTopColor: '#222',
+          backgroundColor: '#1A0F0A',
+          borderTopColor: '#5C4033',
+          borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
         },
-        tabBarActiveTintColor: '#006400',
-        tabBarInactiveTintColor: '#888',
+        tabBarActiveTintColor: '#D4AF37',
+        tabBarInactiveTintColor: '#5C4033',
+        tabBarLabelStyle: {
+          fontFamily: 'serif',
+          fontWeight: 'bold',
+          fontSize: 12,
+        }
       }}
     >
       <Tabs.Screen
         name="collaborate"
         options={{
-          title: 'Collaborate',
-          // tabIcon: (props) => <Icon {...props} name="message-square" />
+          title: 'SCROLLS',
         }}
       />
       <Tabs.Screen
         name="shop"
         options={{
-          title: 'Shop',
-          // tabIcon: (props) => <Icon {...props} name="shopping-bag" />
+          title: 'KINGDOM',
         }}
       />
     </Tabs>

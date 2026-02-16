@@ -7,6 +7,7 @@ import { useState } from "react";
 /**
  * Collaboration Tab - Real-time notes and activity log
  * Two owners can leave notes, feedback, and see what the other is doing
+ * Styled with a Medieval/Celtic theme: Gold, Dark Browns, and Serif fonts.
  */
 export default function CollaborateScreen() {
   const { user, isAuthenticated } = useAuth();
@@ -54,166 +55,175 @@ export default function CollaborateScreen() {
   if (!isAuthenticated) {
     return (
       <ScreenContainer className="items-center justify-center">
-        <Text className="text-foreground">Please sign in to collaborate</Text>
+        <Text className="text-foreground text-lg" style={{ fontFamily: 'serif' }}>Please sign in to collaborate</Text>
       </ScreenContainer>
     );
   }
 
-  return (
-    <ScreenContainer className="p-6">
-      <View className="gap-4 flex-1">
-        {/* Header */}
-        <View className="gap-2">
-          <Text className="text-2xl font-bold text-foreground">Collaborate</Text>
-          <Text className="text-sm text-muted">Work together in real-time</Text>
-        </View>
-
-        {/* Tab Selector */}
-        <View className="flex-row gap-2 bg-surface rounded-lg p-1">
-          <TouchableOpacity
-            className={`flex-1 py-2 rounded-md ${activeTab === "notes" ? "bg-primary" : ""}`}
-            onPress={() => setActiveTab("notes")}
-          >
-            <Text className={`text-sm font-semibold text-center ${activeTab === "notes" ? "text-white" : "text-foreground"}`}>
-              Notes
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-2 rounded-md ${activeTab === "activity" ? "bg-primary" : ""}`}
-            onPress={() => setActiveTab("activity")}
-          >
-            <Text className={`text-sm font-semibold text-center ${activeTab === "activity" ? "text-white" : "text-foreground"}`}>
-              Activity
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Notes Tab */}
-        {activeTab === "notes" && (
-          <View className="gap-4 flex-1">
-            {/* Create Note Section */}
-            <View className="bg-surface rounded-xl p-4 border border-border gap-3">
-              <Text className="text-sm font-semibold text-foreground">Leave a Note</Text>
-
-              {/* Category Selector */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
-                <View className="flex-row gap-2">
-                  {categories.map((cat) => (
-                    <TouchableOpacity
-                      key={cat.id}
-                      className={`px-3 py-1 rounded-full ${
-                        selectedCategory === cat.id ? "bg-primary" : "bg-background border border-border"
-                      }`}
-                      onPress={() => setSelectedCategory(cat.id)}
-                    >
-                      <Text className={`text-xs font-semibold ${selectedCategory === cat.id ? "text-white" : "text-foreground"}`}>
-                        {cat.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-
-              {/* Note Input */}
-              <TextInput
-                className="bg-background border border-border rounded-lg p-3 text-white min-h-[100px]"
-                placeholder="Type your note here..."
-                placeholderTextColor="#666"
-                multiline
-                value={noteContent}
-                onChangeText={setNoteContent}
-                style={{ textAlignVertical: 'top' }}
-              />
-
-              <TouchableOpacity
-                className="bg-primary rounded-lg py-3 active:opacity-80"
-                onPress={handleCreateNote}
-                disabled={createNoteMutation.isPending}
-              >
-                <Text className="text-white font-semibold text-center">
-                  {createNoteMutation.isPending ? "Posting..." : "Post Note"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Notes List */}
-            {notesLoading ? (
-              <View className="flex-1 items-center justify-center">
-                <ActivityIndicator size="large" />
-              </View>
-            ) : sharedNotes.length === 0 ? (
-              <View className="flex-1 items-center justify-center gap-2">
-                <Text className="text-sm text-muted">No notes yet</Text>
-                <Text className="text-xs text-muted">Start collaborating by posting a note</Text>
-              </View>
-            ) : (
-              <FlatList
-                data={sharedNotes}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ gap: 12, paddingBottom: 20 }}
-                renderItem={({ item }) => (
-                  <View className="bg-surface rounded-lg p-4 border border-border">
-                    <View className="flex-row items-start justify-between gap-2 mb-2">
-                      <View className="flex-1">
-                        <Text className="text-sm font-semibold text-foreground">
-                          {item.authorId === user?.id ? "You" : (item.authorName || 'Co-owner')}
-                        </Text>
-                        <Text className="text-xs text-muted">
-                          {new Date(item.createdAt).toLocaleDateString()}
-                        </Text>
-                      </View>
-                      <View className="bg-primary/20 border border-primary/30 rounded-full px-2 py-1">
-                        <Text className="text-[10px] font-semibold text-primary capitalize">
-                          {item.category.replace("_", " ")}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text className="text-sm text-foreground leading-relaxed">{item.content}</Text>
-                  </View>
-                )}
-              />
-            )}
-          </View>
-        )}
-
-        {/* Activity Tab */}
-        {activeTab === "activity" && (
-          <View className="gap-4 flex-1">
-            {activityLoading ? (
-              <View className="flex-1 items-center justify-center">
-                <ActivityIndicator size="large" />
-              </View>
-            ) : activity.length === 0 ? (
-              <View className="flex-1 items-center justify-center gap-2">
-                <Text className="text-sm text-muted">No activity yet</Text>
-              </View>
-            ) : (
-              <FlatList
-                data={activity}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ gap: 12, paddingBottom: 20 }}
-                renderItem={({ item }) => (
-                  <View className="bg-surface rounded-lg p-4 border border-border">
-                    <View className="flex-row items-start justify-between gap-2">
-                      <View className="flex-1">
-                        <Text className="text-sm font-semibold text-foreground capitalize">
-                          {item.action.replace(/_/g, " ")}
-                        </Text>
-                        {item.description && (
-                          <Text className="text-sm text-muted mt-1">{item.description}</Text>
-                        )}
-                        <Text className="text-xs text-muted mt-2">
-                          {new Date(item.createdAt).toLocaleString()}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                )}
-              />
-            )}
-          </View>
-        )}
+  const renderHeader = () => (
+    <View className="gap-6 mb-6">
+      {/* Header */}
+      <View className="gap-1 items-center">
+        <Text className="text-3xl font-bold text-primary tracking-widest" style={{ fontFamily: 'serif' }}>
+          TUATH COIR
+        </Text>
+        <View className="h-[1px] w-full bg-border" />
+        <Text className="text-lg font-semibold text-foreground mt-2" style={{ fontFamily: 'serif' }}>
+          Tribe Collaboration
+        </Text>
+        <Text className="text-xs text-muted italic" style={{ fontFamily: 'serif' }}>
+          Ancient Roots • Unified Tribe
+        </Text>
       </View>
+
+      {/* Tab Selector */}
+      <View className="flex-row gap-0 bg-surface rounded-none border border-border p-1">
+        <TouchableOpacity
+          className={`flex-1 py-3 ${activeTab === "notes" ? "bg-primary" : "bg-transparent"}`}
+          onPress={() => setActiveTab("notes")}
+        >
+          <Text className={`text-sm font-bold text-center ${activeTab === "notes" ? "text-background" : "text-foreground"}`} style={{ fontFamily: 'serif' }}>
+            SCROLLS (NOTES)
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className={`flex-1 py-3 ${activeTab === "activity" ? "bg-primary" : "bg-transparent"}`}
+          onPress={() => setActiveTab("activity")}
+        >
+          <Text className={`text-sm font-bold text-center ${activeTab === "activity" ? "text-background" : "text-foreground"}`} style={{ fontFamily: 'serif' }}>
+            LEDGER (ACTIVITY)
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Create Note Section - only shown on notes tab */}
+      {activeTab === "notes" && (
+        <View className="bg-surface rounded-none p-4 border-2 border-border gap-4 shadow-xl">
+          <Text className="text-base font-bold text-primary" style={{ fontFamily: 'serif' }}>Leave a Message</Text>
+
+          {/* Category Selector */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row gap-2">
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  className={`px-4 py-2 border ${
+                    selectedCategory === cat.id ? "bg-primary border-primary" : "bg-background border-border"
+                  }`}
+                  onPress={() => setSelectedCategory(cat.id)}
+                >
+                  <Text className={`text-[10px] font-bold uppercase ${selectedCategory === cat.id ? "text-background" : "text-foreground"}`} style={{ fontFamily: 'serif' }}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+
+          {/* Note Input */}
+          <TextInput
+            className="bg-background border border-border p-4 text-foreground min-h-[120px]"
+            placeholder="Etch your thoughts here..."
+            placeholderTextColor="#5C4033"
+            multiline
+            value={noteContent}
+            onChangeText={setNoteContent}
+            style={{ textAlignVertical: 'top', fontFamily: 'serif' }}
+          />
+
+          <TouchableOpacity
+            className="bg-primary py-4 active:opacity-80 border border-gold"
+            onPress={handleCreateNote}
+            disabled={createNoteMutation.isPending}
+          >
+            <Text className="text-background font-black text-center text-base" style={{ fontFamily: 'serif' }}>
+              {createNoteMutation.isPending ? "ETCHING..." : "POST TO TRIBE"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  );
+
+  return (
+    <ScreenContainer className="p-4">
+      {activeTab === "notes" ? (
+        <FlatList
+          data={sharedNotes}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            !notesLoading ? (
+              <View className="items-center py-10">
+                <Text className="text-muted italic" style={{ fontFamily: 'serif' }}>No scrolls found in the archives</Text>
+              </View>
+            ) : null
+          }
+          renderItem={({ item }) => {
+            const isMe = item.authorId === user?.id;
+            return (
+              <View className={`mb-4 overflow-hidden border ${isMe ? "border-primary bg-surface/50 ml-6" : "border-border bg-surface mr-6"}`}>
+                <View className={`px-4 py-2 flex-row justify-between items-center ${isMe ? "bg-primary/10" : "bg-border/20"}`}>
+                  <Text className={`text-xs font-bold ${isMe ? "text-primary" : "text-foreground"}`} style={{ fontFamily: 'serif' }}>
+                    {isMe ? "YOU" : (item.authorName?.toUpperCase() || "CO-OWNER")}
+                  </Text>
+                  <Text className="text-[10px] text-muted" style={{ fontFamily: 'serif' }}>
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                <View className="p-4">
+                  <View className="mb-2 self-start bg-primary/20 px-2 py-0.5 border border-primary/30">
+                    <Text className="text-[9px] font-bold text-primary uppercase" style={{ fontFamily: 'serif' }}>
+                      {item.category.replace("_", " ")}
+                    </Text>
+                  </View>
+                  <Text className="text-sm text-foreground leading-6" style={{ fontFamily: 'serif' }}>{item.content}</Text>
+                </View>
+              </View>
+            );
+          }}
+        />
+      ) : (
+        <FlatList
+          data={activity}
+          keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            !activityLoading ? (
+              <View className="items-center py-10">
+                <Text className="text-muted italic" style={{ fontFamily: 'serif' }}>The ledger is empty</Text>
+              </View>
+            ) : null
+          }
+          renderItem={({ item }) => (
+            <View className="bg-surface border-l-4 border-l-primary border border-border p-4 mb-3">
+              <View className="flex-row items-start justify-between">
+                <View className="flex-1">
+                  <Text className="text-sm font-bold text-primary uppercase tracking-tighter" style={{ fontFamily: 'serif' }}>
+                    {item.action.replace(/_/g, " ")}
+                  </Text>
+                  {item.description && (
+                    <Text className="text-sm text-foreground mt-1" style={{ fontFamily: 'serif' }}>{item.description}</Text>
+                  )}
+                  <Text className="text-[10px] text-muted mt-3 italic" style={{ fontFamily: 'serif' }}>
+                    {new Date(item.createdAt).toLocaleString()}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        />
+      )}
+
+      {(notesLoading || activityLoading) && (
+        <View className="absolute inset-0 items-center justify-center bg-background/50">
+          <ActivityIndicator size="large" color="#D4AF37" />
+        </View>
+      )}
     </ScreenContainer>
   );
 }

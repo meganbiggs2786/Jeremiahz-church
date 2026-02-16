@@ -198,25 +198,6 @@ export default {
       // ADMIN DASHBOARD
       // ═══════════════════════════════════════════════════════
       if (path.startsWith('/admin')) {
-        const authHeader = request.headers.get('Authorization');
-
-        if (!authHeader || !authHeader.startsWith('Basic ')) {
-          return new Response('Unauthorized', {
-            status: 401,
-            headers: { ...headers, 'WWW-Authenticate': 'Basic realm="Admin"', 'Content-Type': 'text/html' }
-          });
-        }
-
-        const credentials = atob(authHeader.split(' ')[1]);
-        const [username, password] = credentials.split(':');
-        const hashedPassword = await hashPassword(password);
-
-        if (username !== env.ADMIN_USERNAME || hashedPassword !== env.ADMIN_PASSWORD_HASH) {
-          console.warn(`Failed admin login attempt from ${clientIP}`);
-          return new Response('Invalid credentials', { status: 401, headers: { ...headers, 'Content-Type': 'text/html' } });
-        }
-
-        console.info(`Admin login successful: ${username} from ${clientIP}`);
         return await handleAdmin(request, env, headers, path);
       }
 
@@ -883,56 +864,400 @@ async function handlePrintfulWebhook(request, env, headers) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ADMIN HANDLERS
+// ADMIN AUTHENTICATION & DASHBOARD
 // ═══════════════════════════════════════════════════════════════
 
 async function handleAdmin(request, env, headers, path) {
-  // Admin logic (Auth already checked in fetch handler)
-  const { results: orders } = await env.DB.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all();
+  // Check authentication
+  const authHeader = request.headers.get('Authorization');
 
-  let ordersHtml = orders.map(o => `
-    <tr>
-      <td style="padding:10px; border-bottom:1px solid #222;">${o.order_number}</td>
-      <td style="padding:10px; border-bottom:1px solid #222;">${o.customer_email}</td>
-      <td style="padding:10px; border-bottom:1px solid #222;">$${o.total_amount.toFixed(2)}</td>
-      <td style="padding:10px; border-bottom:1px solid #222;">
-        <span style="color:${o.payment_status === 'paid' ? '#00ff00' : '#ff0000'}">${o.payment_status.toUpperCase()}</span>
-      </td>
-      <td style="padding:10px; border-bottom:1px solid #222;">${o.status}</td>
-    </tr>
-  `).join('');
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    return new Response(getAdminLogin(), {
+      status: 401,
+      headers: {
+        'Content-Type': 'text/html',
+        'WWW-Authenticate': 'Basic realm="Tuath Coir Admin"'
+      }
+    });
+  }
 
-  const html = `<!DOCTYPE html>
-<html>
+  // Verify credentials
+  const credentials = atob(authHeader.split(' ')[1]);
+  const [username, password] = credentials.split(':');
+
+  const validUsername = env.ADMIN_USERNAME || 'admin';
+  const hashedPassword = await hashPassword(password);
+
+  if (!env.ADMIN_PASSWORD_HASH ||
+      username !== validUsername ||
+      hashedPassword !== env.ADMIN_PASSWORD_HASH) {
+    return new Response(getAdminLogin(true), {
+      status: 401,
+      headers: {
+        'Content-Type': 'text/html',
+        'WWW-Authenticate': 'Basic realm="Tuath Coir Admin"'
+      }
+    });
+  }
+
+  // Get dashboard stats
+  const stats = await getAdminStats(env);
+
+  // Return dashboard
+  return new Response(getAdminDashboard(stats, env), {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
+}
+
+async function getAdminStats(env) {
+  try {
+    // All-time stats
+    const allTime = await env.DB.prepare(`
+      SELECT
+        COUNT(*) as total_orders,
+        COALESCE(SUM(total_amount), 0) as total_revenue,
+        COALESCE(SUM(profit_amount), 0) as total_profit
+      FROM orders
+      WHERE payment_status = 'paid'
+    `).first();
+
+    // Today's stats
+    const today = await env.DB.prepare(`
+      SELECT
+        COUNT(*) as today_orders,
+        COALESCE(SUM(total_amount), 0) as today_revenue,
+        COALESCE(SUM(profit_amount), 0) as today_profit
+      FROM orders
+      WHERE DATE(created_at) = DATE('now')
+      AND payment_status = 'paid'
+    `).first();
+
+    // Recent orders
+    const { results: recentOrders } = await env.DB.prepare(`
+      SELECT
+        order_number,
+        customer_email,
+        customer_name,
+        total_amount,
+        profit_amount,
+        status,
+        payment_status,
+        fulfillment_status,
+        created_at
+      FROM orders
+      ORDER BY created_at DESC
+      LIMIT 10
+    `).all();
+
+    // This week stats
+    const week = await env.DB.prepare(`
+      SELECT
+        COUNT(*) as week_orders,
+        COALESCE(SUM(total_amount), 0) as week_revenue,
+        COALESCE(SUM(profit_amount), 0) as week_profit
+      FROM orders
+      WHERE DATE(created_at) >= DATE('now', '-7 days')
+      AND payment_status = 'paid'
+    `).first();
+
+    // Pending orders (Unpaid)
+    const pending = await env.DB.prepare(`
+      SELECT COUNT(*) as count FROM orders WHERE payment_status = 'unpaid'
+    `).first();
+
+    return {
+      total_orders: allTime.total_orders || 0,
+      total_revenue: (allTime.total_revenue || 0).toFixed(2),
+      total_profit: (allTime.total_profit || 0).toFixed(2),
+      today_orders: today.today_orders || 0,
+      today_revenue: (today.today_revenue || 0).toFixed(2),
+      today_profit: (today.today_profit || 0).toFixed(2),
+      week_orders: week.week_orders || 0,
+      week_revenue: (week.week_revenue || 0).toFixed(2),
+      week_profit: (week.week_profit || 0).toFixed(2),
+      pending_orders: pending.count || 0,
+      recent_orders: recentOrders
+    };
+  } catch (error) {
+    console.error('Stats error:', error);
+    return {
+      total_orders: 0,
+      total_revenue: '0.00',
+      total_profit: '0.00',
+      today_orders: 0,
+      today_revenue: '0.00',
+      today_profit: '0.00',
+      week_orders: 0,
+      week_revenue: '0.00',
+      week_profit: '0.00',
+      pending_orders: 0,
+      recent_orders: []
+    };
+  }
+}
+
+function getAdminLogin(failed = false) {
+  return `<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>TC ADMIN | Orders</title>
-  <style>
-    body { background:#000; color:#fff; font-family:sans-serif; padding:40px; }
-    h1 { letter-spacing:10px; border-bottom:3px solid #fff; padding-bottom:10px; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th { text-align:left; background:#111; padding:10px; letter-spacing:2px; font-size:12px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuath Coir | Admin Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .login-box {
+            border: 2px solid #00ff00;
+            padding: 40px;
+            background: #0a0a0a;
+            max-width: 400px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+        h1 {
+            color: #FFD700;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .error {
+            color: #ff0000;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+        p {
+            color: #666;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        .logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-  <h1>TUATH COIR ADMIN</h1>
-  <table>
-    <thead>
-      <tr>
-        <th>ORDER #</th>
-        <th>CUSTOMER</th>
-        <th>TOTAL</th>
-        <th>PAYMENT</th>
-        <th>STATUS</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${ordersHtml || '<tr><td colspan="5" style="text-align:center; padding:20px;">No orders yet</td></tr>'}
-    </tbody>
-  </table>
+    <div class="login-box">
+        <div class="logo">⚔️</div>
+        <h1>TUATH COIR</h1>
+        <p>ADMIN COMMAND CENTER</p>
+        ${failed ? '<p class="error">❌ INVALID CREDENTIALS<br>Access Denied</p>' : ''}
+        <p>Enter your credentials to access the dashboard.</p>
+        <p style="font-size: 10px; margin-top: 30px;">Protected Area • Megan & Joy Only</p>
+    </div>
 </body>
 </html>`;
+}
 
-  return new Response(html, { headers: { ...headers, 'Content-Type': 'text/html' } });
+function getAdminDashboard(stats, env) {
+  const avgOrderValue = stats.total_orders > 0
+    ? (parseFloat(stats.total_revenue) / stats.total_orders).toFixed(2)
+    : '0.00';
+
+  const profitMargin = parseFloat(stats.total_revenue) > 0
+    ? ((parseFloat(stats.total_profit) / parseFloat(stats.total_revenue)) * 100).toFixed(1)
+    : '0.0';
+
+  const ordersHtml = stats.recent_orders.length > 0
+    ? stats.recent_orders.map(o => `
+        <tr>
+          <td>${o.order_number}</td>
+          <td>${o.customer_name || o.customer_email}</td>
+          <td>$${parseFloat(o.total_amount).toFixed(2)}</td>
+          <td><span class="status-pill status-${o.payment_status}">${o.payment_status.toUpperCase()}</span></td>
+          <td>${o.status.replace(/_/g, ' ').toUpperCase()}</td>
+          <td>${new Date(o.created_at).toLocaleDateString()}</td>
+        </tr>
+      `).join('')
+    : '<tr><td colspan="6" style="text-align:center; padding:40px; color:#444;">No recent tributes found in archives.</td></tr>';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuath Coir | Admin Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .header {
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 { color: #FFD700; letter-spacing: 4px; font-size: 24px; }
+        .timestamp { color: #666; font-size: 12px; }
+
+        .alert {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid #FFD700;
+            color: #FFD700;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .panel {
+            border: 1px solid #00ff00;
+            padding: 20px;
+            background: #0d0d0d;
+            position: relative;
+            overflow: hidden;
+        }
+        .panel::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+        }
+        .panel-label { color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .panel-value { color: #fff; font-size: 28px; font-weight: bold; }
+        .panel-sub { color: #00ff00; font-size: 12px; margin-top: 5px; }
+
+        .table-container {
+            border: 1px solid #222;
+            background: #0d0d0d;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #1a1a1a;
+            color: #FFD700;
+            text-align: left;
+            padding: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #111;
+            color: #ccc;
+        }
+        tr:hover td { background: #151515; color: #fff; }
+
+        .status-pill {
+            padding: 2px 8px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+        .status-paid { background: #004400; color: #00ff00; border: 1px solid #00ff00; }
+        .status-unpaid { background: #440000; color: #ff0000; border: 1px solid #ff0000; }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #333;
+            font-size: 10px;
+            letter-spacing: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>⚔️ TUATH COIR ADMIN ⚔️</h1>
+            <p style="color:#666; font-size:10px; letter-spacing:2px;">KINGDOM COMMAND CENTER</p>
+        </div>
+        <div class="timestamp">
+            SYSTEM STATUS: ONLINE<br>
+            LOCAL TIME: ${new Date().toLocaleString()}
+        </div>
+    </div>
+
+    ${stats.pending_orders > 0 ? `
+        <div class="alert">
+            ⚠️ ATTENTION: There are <strong>${stats.pending_orders}</strong> pending orders requiring tribute verification.
+        </div>
+    ` : ''}
+
+    <div class="grid">
+        <div class="panel">
+            <div class="panel-label">Total Revenue</div>
+            <div class="panel-value">$${stats.total_revenue}</div>
+            <div class="panel-sub">Across ${stats.total_orders} successful tributes</div>
+        </div>
+        <div class="panel">
+            <div class="panel-label">Total Profit</div>
+            <div class="panel-value" style="color:#FFD700;">$${stats.total_profit}</div>
+            <div class="panel-sub">${profitMargin}% Avg. Margin</div>
+        </div>
+        <div class="panel">
+            <div class="panel-label">Avg. Tribute Value</div>
+            <div class="panel-value">$${avgOrderValue}</div>
+            <div class="panel-sub">Per order average</div>
+        </div>
+        <div class="panel">
+            <div class="panel-label">Cycle Performance (7D)</div>
+            <div class="panel-value">$${stats.week_revenue}</div>
+            <div class="panel-sub">${stats.week_orders} New Tributes</div>
+        </div>
+        <div class="panel">
+            <div class="panel-label">Today's Earnings</div>
+            <div class="panel-value">$${stats.today_revenue}</div>
+            <div class="panel-sub">Profit: $${stats.today_profit}</div>
+        </div>
+        <div class="panel">
+            <div class="panel-label">System Health</div>
+            <div class="panel-value">SECURE</div>
+            <div class="panel-sub">Encryption Active</div>
+        </div>
+    </div>
+
+    <h2 style="color:#FFD700; font-size:16px; margin-bottom:15px; letter-spacing:2px; text-transform:uppercase;">Recent Tributes</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rune (Order #)</th>
+                    <th>Messenger (Customer)</th>
+                    <th>Value</th>
+                    <th>Offering</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${ordersHtml}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        ANCIENT ROOTS • UNIFIED TRIBE • SECURE COMMAND
+    </div>
+</body>
+</html>`;
 }
 
 // ═══════════════════════════════════════════════════════════════

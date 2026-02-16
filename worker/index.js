@@ -1068,19 +1068,6 @@ function getAdminDashboard(stats, env) {
     ? ((parseFloat(stats.total_profit) / parseFloat(stats.total_revenue)) * 100).toFixed(1)
     : '0.0';
 
-  const ordersHtml = stats.recent_orders.length > 0
-    ? stats.recent_orders.map(o => `
-        <tr>
-          <td>${o.order_number}</td>
-          <td>${o.customer_name || o.customer_email}</td>
-          <td>$${parseFloat(o.total_amount).toFixed(2)}</td>
-          <td><span class="status-pill status-${o.payment_status}">${o.payment_status.toUpperCase()}</span></td>
-          <td>${o.status.replace(/_/g, ' ').toUpperCase()}</td>
-          <td>${new Date(o.created_at).toLocaleDateString()}</td>
-        </tr>
-      `).join('')
-    : '<tr><td colspan="6" style="text-align:center; padding:40px; color:#444;">No recent tributes found in archives.</td></tr>';
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1103,9 +1090,11 @@ function getAdminDashboard(stats, env) {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         h1 { color: #FFD700; letter-spacing: 4px; font-size: 24px; }
-        .timestamp { color: #666; font-size: 12px; }
+        .timestamp { color: #666; font-size: 12px; text-align: right; }
 
         .alert {
             background: rgba(255, 215, 0, 0.1);
@@ -1113,12 +1102,12 @@ function getAdminDashboard(stats, env) {
             color: #FFD700;
             padding: 15px;
             margin-bottom: 20px;
-            font-size: 14px;
+            border-radius: 3px;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -1126,53 +1115,112 @@ function getAdminDashboard(stats, env) {
             border: 1px solid #00ff00;
             padding: 20px;
             background: #0d0d0d;
-            position: relative;
-            overflow: hidden;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
         }
-        .panel::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+        .panel h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+            font-size: 14px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 10px;
         }
-        .panel-label { color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
-        .panel-value { color: #fff; font-size: 28px; font-weight: bold; }
-        .panel-sub { color: #00ff00; font-size: 12px; margin-top: 5px; }
 
-        .table-container {
-            border: 1px solid #222;
-            background: #0d0d0d;
-            overflow-x: auto;
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a1a;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        th {
-            background: #1a1a1a;
-            color: #FFD700;
-            text-align: left;
-            padding: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid #222;
-        }
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #111;
-            color: #ccc;
-        }
-        tr:hover td { background: #151515; color: #fff; }
+        .stat:last-child { border-bottom: none; }
+        .stat-label { color: #666; font-size: 12px; }
+        .stat-value { color: #00ff00; font-weight: bold; font-size: 14px; }
+        .stat-value.profit { color: #FFD700; }
+        .stat-value.warning { color: #ff9900; }
 
-        .status-pill {
-            padding: 2px 8px;
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 2px;
             font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-paid { background: #003300; color: #00ff00; border: 1px solid #00ff00; }
+        .status-unpaid { background: #330000; color: #ff6666; border: 1px solid #ff0000; }
+        .status-processing { background: #333300; color: #ffff00; border: 1px solid #ffff00; }
+        .status-shipped { background: #003366; color: #66ccff; border: 1px solid #0099ff; }
+
+        .integration-status {
+            padding: 2px 6px;
+            font-size: 9px;
             font-weight: bold;
             border-radius: 2px;
         }
-        .status-paid { background: #004400; color: #00ff00; border: 1px solid #00ff00; }
-        .status-unpaid { background: #440000; color: #ff0000; border: 1px solid #ff0000; }
+        .integration-status.online { background: #004400; color: #00ff00; border: 1px solid #00ff00; }
+        .integration-status.offline { background: #440000; color: #ff0000; border: 1px solid #ff0000; }
+
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 11px;
+        }
+        .orders-table th {
+            background: #1a1a1a;
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 2px solid #00ff00;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .orders-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #111;
+            color: #ccc;
+        }
+        .orders-table tr:hover {
+            background: #151515;
+        }
+
+        .btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            border-radius: 3px;
+            text-transform: uppercase;
+            font-size: 11px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        .btn:hover { background: #00cc00; transform: translateY(-2px); }
+        .btn-secondary { background: transparent; border: 1px solid #00ff00; color: #00ff00; }
+
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 60px 20px;
+        }
+
+        .refresh-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 15px;
+            font-size: 10px;
+            border-radius: 20px;
+        }
 
         .footer {
             margin-top: 50px;
@@ -1202,56 +1250,208 @@ function getAdminDashboard(stats, env) {
     ` : ''}
 
     <div class="grid">
+        <!-- DAILY SCROLL -->
         <div class="panel">
-            <div class="panel-label">Total Revenue</div>
-            <div class="panel-value">$${stats.total_revenue}</div>
-            <div class="panel-sub">Across ${stats.total_orders} successful tributes</div>
+            <h3>📜 DAILY SCROLL (TODAY)</h3>
+            <div class="stat">
+                <span class="stat-label">Orders:</span>
+                <span class="stat-value">${stats.today_orders}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Revenue:</span>
+                <span class="stat-value">$${stats.today_revenue}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Profit:</span>
+                <span class="stat-value profit">$${stats.today_profit}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Avg Order:</span>
+                <span class="stat-value">$${stats.today_orders > 0 ? (parseFloat(stats.today_revenue) / stats.today_orders).toFixed(2) : '0.00'}</span>
+            </div>
         </div>
+
+        <!-- THIS WEEK -->
         <div class="panel">
-            <div class="panel-label">Total Profit</div>
-            <div class="panel-value" style="color:#FFD700;">$${stats.total_profit}</div>
-            <div class="panel-sub">${profitMargin}% Avg. Margin</div>
+            <h3>📅 THIS WEEK (7 Days)</h3>
+            <div class="stat">
+                <span class="stat-label">Orders:</span>
+                <span class="stat-value">${stats.week_orders}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Revenue:</span>
+                <span class="stat-value">$${stats.week_revenue}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Profit:</span>
+                <span class="stat-value profit">$${stats.week_profit}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Daily Avg:</span>
+                <span class="stat-value">$${(parseFloat(stats.week_revenue) / 7).toFixed(2)}</span>
+            </div>
         </div>
+
+        <!-- ALL TIME STATS -->
         <div class="panel">
-            <div class="panel-label">Avg. Tribute Value</div>
-            <div class="panel-value">$${avgOrderValue}</div>
-            <div class="panel-sub">Per order average</div>
+            <h3>📊 ALL TIME</h3>
+            <div class="stat">
+                <span class="stat-label">Total Orders:</span>
+                <span class="stat-value">${stats.total_orders}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Total Revenue:</span>
+                <span class="stat-value">$${stats.total_revenue}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Total Profit:</span>
+                <span class="stat-value profit">$${stats.total_profit}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Avg Order Value:</span>
+                <span class="stat-value">$${avgOrderValue}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Profit Margin:</span>
+                <span class="stat-value profit">${profitMargin}%</span>
+            </div>
         </div>
+
+        <!-- INTEGRATIONS STATUS -->
         <div class="panel">
-            <div class="panel-label">Cycle Performance (7D)</div>
-            <div class="panel-value">$${stats.week_revenue}</div>
-            <div class="panel-sub">${stats.week_orders} New Tributes</div>
-        </div>
-        <div class="panel">
-            <div class="panel-label">Today's Earnings</div>
-            <div class="panel-value">$${stats.today_revenue}</div>
-            <div class="panel-sub">Profit: $${stats.today_profit}</div>
-        </div>
-        <div class="panel">
-            <div class="panel-label">System Health</div>
-            <div class="panel-value">SECURE</div>
-            <div class="panel-sub">Encryption Active</div>
+            <h3>🔌 INTEGRATIONS</h3>
+            <div class="stat">
+                <span class="stat-label">Stripe Payments:</span>
+                <span class="integration-status ${env.STRIPE_SECRET_KEY ? 'online' : 'offline'}">
+                    ${env.STRIPE_SECRET_KEY ? 'ONLINE' : 'OFFLINE'}
+                </span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Printful POD:</span>
+                <span class="integration-status ${env.PRINTFUL_API_KEY ? 'online' : 'offline'}">
+                    ${env.PRINTFUL_API_KEY ? 'ONLINE' : 'OFFLINE'}
+                </span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">EPROLO:</span>
+                <span class="integration-status ${env.EPROLO_API_KEY ? 'online' : 'offline'}">
+                    ${env.EPROLO_API_KEY ? 'ONLINE' : 'OFFLINE'}
+                </span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Zendrop:</span>
+                <span class="integration-status ${env.ZENDROP_API_KEY ? 'online' : 'offline'}">
+                    ${env.ZENDROP_API_KEY ? 'ONLINE' : 'OFFLINE'}
+                </span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Database:</span>
+                <span class="integration-status online">CONNECTED</span>
+            </div>
         </div>
     </div>
 
-    <h2 style="color:#FFD700; font-size:16px; margin-bottom:15px; letter-spacing:2px; text-transform:uppercase;">Recent Tributes</h2>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Rune (Order #)</th>
-                    <th>Messenger (Customer)</th>
-                    <th>Value</th>
-                    <th>Offering</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${ordersHtml}
-            </tbody>
-        </table>
+    <!-- RECENT ORDERS TABLE -->
+    <div class="panel">
+        <h3>📦 RECENT ORDERS (Last 10)</h3>
+        ${stats.recent_orders.length === 0 ? `
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 10px;">📭</div>
+                <p>No orders yet</p>
+                <p style="font-size: 10px; margin-top: 10px;">
+                    Orders will appear here once customers start purchasing
+                </p>
+            </div>
+        ` : `
+            <div style="overflow-x: auto;">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>ORDER #</th>
+                            <th>CUSTOMER</th>
+                            <th>EMAIL</th>
+                            <th>TOTAL</th>
+                            <th>PROFIT</th>
+                            <th>PAYMENT</th>
+                            <th>FULFILLMENT</th>
+                            <th>DATE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${stats.recent_orders.map(order => `
+                            <tr>
+                                <td><strong>${order.order_number}</strong></td>
+                                <td>${order.customer_name || '<em>N/A</em>'}</td>
+                                <td>${order.customer_email}</td>
+                                <td>$${order.total_amount?.toFixed(2) || '0.00'}</td>
+                                <td style="color:#FFD700;"><strong>$${order.profit_amount?.toFixed(2) || '0.00'}</strong></td>
+                                <td>
+                                    <span class="status-badge status-${order.payment_status}">
+                                        ${order.payment_status?.toUpperCase() || 'UNKNOWN'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-${order.fulfillment_status}">
+                                        ${order.fulfillment_status?.toUpperCase() || 'UNKNOWN'}
+                                    </span>
+                                </td>
+                                <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `}
     </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="panel" style="margin-top: 20px;">
+        <h3>⚡ QUICK ACTIONS</h3>
+        <button class="btn" onclick="window.location.reload()">
+            ↻ REFRESH DATA
+        </button>
+        <button class="btn btn-secondary" onclick="window.open('/api/products', '_blank')">
+            📦 VIEW PRODUCTS
+        </button>
+        <button class="btn btn-secondary" onclick="window.open('https://dashboard.stripe.com', '_blank')">
+            💳 OPEN STRIPE
+        </button>
+        <button class="btn btn-secondary" onclick="window.open('/', '_blank')">
+            🏠 VIEW STOREFRONT
+        </button>
+    </div>
+
+    <!-- AUTO-REFRESH INDICATOR -->
+    <div class="refresh-indicator" id="refresh-timer">
+        Auto-refresh in <span id="countdown">30</span>s
+    </div>
+
+    <script>
+        // Auto-refresh countdown
+        let seconds = 30;
+        const countdownEl = document.getElementById('countdown');
+
+        const interval = setInterval(() => {
+            seconds--;
+            countdownEl.textContent = seconds;
+
+            if (seconds <= 0) {
+                location.reload();
+            }
+        }, 1000);
+
+        // Update page title with order count
+        const orderCount = ${stats.today_orders};
+        if (orderCount > 0) {
+            document.title = '(' + orderCount + ') Tuath Coir Admin';
+        }
+
+        // Highlight new orders
+        const rows = document.querySelectorAll('.orders-table tbody tr');
+        if (rows.length > 0) {
+            rows[0].style.borderLeft = '4px solid #00ff00';
+        }
+    </script>
 
     <div class="footer">
         ANCIENT ROOTS • UNIFIED TRIBE • SECURE COMMAND

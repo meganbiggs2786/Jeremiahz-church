@@ -28,3 +28,15 @@ INSERT INTO products (sku, name, description, category, price, cost_price, suppl
 ('TC-BUNDLE-001', 'The Street King Bundle', 'Oversized Hoodie + Snapback Hat + Crossbody Bag. The ultimate urban outfit. Save $15!', 'Bundles', 99.99, 54.45, 'Multiple', 'BUNDLE_001', '["https://via.placeholder.com/500/006400/FFD700?text=Street+King+Bundle"]'),
 
 ('TC-BUNDLE-002', 'Urban Athlete Set', 'Performance Tank + Tech Joggers. High-performance style for the street. Save $10!', 'Bundles', 61.99, 33.00, 'Multiple', 'BUNDLE_002', '["https://via.placeholder.com/500/222222/FFFFFF?text=Urban+Athlete+Set"]');
+
+-- SEED NOTES
+INSERT INTO notes (author_id, author_name, category, content) VALUES
+('megan', 'Megan', 'general', 'Welcome to the Tuath Coir owner app! This is where we will manage everything.'),
+('lucky_lady', 'One Lucky Lady', 'design', 'I love the new Celtic Clover Street Tee design. Let''s push this on social media.'),
+('megan', 'Megan', 'marketing', 'I''ve started a new ad campaign for the Highlands territory.');
+
+-- SEED ACTIVITY
+INSERT INTO activity_logs (action, description) VALUES
+('system_init', 'Tuath Coir backend initialized with Phase 2 fulfillment systems.'),
+('new_product', 'Added 10 new products to the Urban Wear collection.'),
+('new_note', 'Megan left a new note in General.');

@@ -41,10 +41,23 @@ const rateLimiter = {
   }
 };
 
+import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { appRouter, createContext } from './trpc.js';
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    // Handle tRPC
+    if (path.startsWith('/trpc')) {
+      return fetchRequestHandler({
+        endpoint: '/trpc',
+        req: request,
+        router: appRouter,
+        createContext: ({ req, resHeaders }) => createContext({ req, resHeaders, env }),
+      });
+    }
 
     // GAP 5: Force HTTPS in production
     if (url.protocol !== 'https:' && env.NODE_ENV === 'production') {
@@ -455,6 +468,11 @@ async function handleCreateOrder(request, env, headers, orderData) {
 
     console.log(`Order created: ${orderNumber}`);
 
+    // Log activity
+    await env.DB.prepare(
+      'INSERT INTO activity_logs (action, description, created_at) VALUES (?, ?, ?)'
+    ).bind('order_created', `New order ${orderNumber} created ($${total.toFixed(2)})`, new Date().toISOString()).run();
+
     return new Response(JSON.stringify({
       success: true,
       order_number: orderNumber,
@@ -539,6 +557,11 @@ async function handleInitiation(request, env, headers) {
       INSERT INTO members (name, email, territory, oath_version)
       VALUES (?, ?, ?, ?)
     `).bind(name, email, territory, 'v1-initiation').run();
+
+    // Log activity
+    await env.DB.prepare(
+      'INSERT INTO activity_logs (action, description, created_at) VALUES (?, ?, ?)'
+    ).bind('new_member', `${name} joined the ${territory} Territory`, new Date().toISOString()).run();
 
     console.log(`New initiate: ${name} in ${territory}`);
 

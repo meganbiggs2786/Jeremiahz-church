@@ -66,8 +66,29 @@ CREATE TABLE IF NOT EXISTS members (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Notes table for owner collaboration
+CREATE TABLE IF NOT EXISTS notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  author_id TEXT NOT NULL,
+  author_name TEXT,
+  category TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Activity logs for tracking business events
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  action TEXT NOT NULL,
+  description TEXT,
+  metadata TEXT, -- JSON extra data
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 CREATE INDEX IF NOT EXISTS idx_products_active ON products(is_active);
 CREATE INDEX IF NOT EXISTS idx_orders_email ON orders(customer_email);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(payment_status);
+CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category);
+CREATE INDEX IF NOT EXISTS idx_activity_action ON activity_logs(action);

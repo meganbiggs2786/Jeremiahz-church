@@ -1446,10 +1446,10 @@ function getAdminDashboard(stats, env) {
             document.title = '(' + orderCount + ') Tuath Coir Admin';
         }
 
-        // Highlight new orders
+        // Highlight new orders (if any)
         const rows = document.querySelectorAll('.orders-table tbody tr');
         if (rows.length > 0) {
-            rows[0].style.borderLeft = '4px solid #00ff00';
+            rows[0].style.background = 'rgba(0, 255, 0, 0.05)';
         }
     </script>
 

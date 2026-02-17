@@ -1143,7 +1143,7 @@ function getAdminDashboard(stats, env) {
         .status-badge {
             display: inline-block;
             padding: 3px 8px;
-            border-radius: 2px;
+            border-radius: 3px;
             font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
@@ -1152,15 +1152,19 @@ function getAdminDashboard(stats, env) {
         .status-unpaid { background: #330000; color: #ff6666; border: 1px solid #ff0000; }
         .status-processing { background: #333300; color: #ffff00; border: 1px solid #ffff00; }
         .status-shipped { background: #003366; color: #66ccff; border: 1px solid #0099ff; }
+        .status-unfulfilled { background: #2a2a2a; color: #999; border: 1px solid #666; }
 
         .integration-status {
-            padding: 2px 6px;
-            font-size: 9px;
-            font-weight: bold;
-            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+            letter-spacing: 1px;
         }
-        .integration-status.online { background: #004400; color: #00ff00; border: 1px solid #00ff00; }
-        .integration-status.offline { background: #440000; color: #ff0000; border: 1px solid #ff0000; }
+        .online { color: #00ff00; }
+        .online::before { content: '●'; margin-right: 5px; }
+        .offline { color: #666; }
+        .offline::before { content: '○'; margin-right: 5px; }
 
         .orders-table {
             width: 100%;
@@ -1169,21 +1173,24 @@ function getAdminDashboard(stats, env) {
             font-size: 11px;
         }
         .orders-table th {
-            background: #1a1a1a;
-            padding: 12px 10px;
+            background: #001a00;
+            padding: 10px 8px;
             text-align: left;
             border-bottom: 2px solid #00ff00;
             color: #FFD700;
             text-transform: uppercase;
             letter-spacing: 1px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
         .orders-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #111;
+            padding: 10px 8px;
+            border-bottom: 1px solid #222;
             color: #ccc;
         }
         .orders-table tr:hover {
-            background: #151515;
+            background: #111;
         }
 
         .btn {
@@ -1201,13 +1208,15 @@ function getAdminDashboard(stats, env) {
             margin-right: 10px;
             margin-top: 10px;
         }
-        .btn:hover { background: #00cc00; transform: translateY(-2px); }
+        .btn:hover { background: #00cc00; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 255, 0, 0.3); }
         .btn-secondary { background: transparent; border: 1px solid #00ff00; color: #00ff00; }
+        .btn-secondary:hover { background: rgba(0, 255, 0, 0.1); }
 
         .empty-state {
             text-align: center;
             color: #666;
             padding: 60px 20px;
+            font-style: italic;
         }
 
         .refresh-indicator {
@@ -1220,6 +1229,14 @@ function getAdminDashboard(stats, env) {
             padding: 5px 15px;
             font-size: 10px;
             border-radius: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header { flex-direction: column; align-items: flex-start; }
+            h1 { font-size: 18px; letter-spacing: 2px; }
+            .grid { grid-template-columns: 1fr; }
+            .orders-table { font-size: 9px; }
         }
 
         .footer {
@@ -1238,7 +1255,7 @@ function getAdminDashboard(stats, env) {
             <p style="color:#666; font-size:10px; letter-spacing:2px;">KINGDOM COMMAND CENTER</p>
         </div>
         <div class="timestamp">
-            SYSTEM STATUS: ONLINE<br>
+            <div class="integration-status online">SYSTEM: ACTIVE</div>
             LOCAL TIME: ${new Date().toLocaleString()}
         </div>
     </div>
@@ -1322,31 +1339,31 @@ function getAdminDashboard(stats, env) {
             <h3>🔌 INTEGRATIONS</h3>
             <div class="stat">
                 <span class="stat-label">Stripe Payments:</span>
-                <span class="integration-status ${env.STRIPE_SECRET_KEY ? 'online' : 'offline'}">
+                <div class="integration-status ${env.STRIPE_SECRET_KEY ? 'online' : 'offline'}">
                     ${env.STRIPE_SECRET_KEY ? 'ONLINE' : 'OFFLINE'}
-                </span>
+                </div>
             </div>
             <div class="stat">
                 <span class="stat-label">Printful POD:</span>
-                <span class="integration-status ${env.PRINTFUL_API_KEY ? 'online' : 'offline'}">
+                <div class="integration-status ${env.PRINTFUL_API_KEY ? 'online' : 'offline'}">
                     ${env.PRINTFUL_API_KEY ? 'ONLINE' : 'OFFLINE'}
-                </span>
+                </div>
             </div>
             <div class="stat">
                 <span class="stat-label">EPROLO:</span>
-                <span class="integration-status ${env.EPROLO_API_KEY ? 'online' : 'offline'}">
+                <div class="integration-status ${env.EPROLO_API_KEY ? 'online' : 'offline'}">
                     ${env.EPROLO_API_KEY ? 'ONLINE' : 'OFFLINE'}
-                </span>
+                </div>
             </div>
             <div class="stat">
                 <span class="stat-label">Zendrop:</span>
-                <span class="integration-status ${env.ZENDROP_API_KEY ? 'online' : 'offline'}">
+                <div class="integration-status ${env.ZENDROP_API_KEY ? 'online' : 'offline'}">
                     ${env.ZENDROP_API_KEY ? 'ONLINE' : 'OFFLINE'}
-                </span>
+                </div>
             </div>
             <div class="stat">
                 <span class="stat-label">Database:</span>
-                <span class="integration-status online">CONNECTED</span>
+                <div class="integration-status online">CONNECTED</div>
             </div>
         </div>
     </div>
@@ -1383,8 +1400,8 @@ function getAdminDashboard(stats, env) {
                                 <td><strong>${order.order_number}</strong></td>
                                 <td>${order.customer_name || '<em>N/A</em>'}</td>
                                 <td>${order.customer_email}</td>
-                                <td>$${order.total_amount?.toFixed(2) || '0.00'}</td>
-                                <td style="color:#FFD700;"><strong>$${order.profit_amount?.toFixed(2) || '0.00'}</strong></td>
+                                <td>$${parseFloat(order.total_amount || 0).toFixed(2)}</td>
+                                <td style="color:#FFD700;"><strong>$${parseFloat(order.profit_amount || 0).toFixed(2)}</strong></td>
                                 <td>
                                     <span class="status-badge status-${order.payment_status}">
                                         ${order.payment_status?.toUpperCase() || 'UNKNOWN'}
@@ -1433,7 +1450,7 @@ function getAdminDashboard(stats, env) {
 
         const interval = setInterval(() => {
             seconds--;
-            countdownEl.textContent = seconds;
+            if (countdownEl) countdownEl.textContent = seconds;
 
             if (seconds <= 0) {
                 location.reload();

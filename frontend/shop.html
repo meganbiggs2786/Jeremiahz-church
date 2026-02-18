@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUATH COIR | Catalog</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        header {
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 { color: #FFD700; letter-spacing: 4px; }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+        }
+        .product-card {
+            border: 1px solid #333;
+            padding: 15px;
+            background: #0a0a0a;
+            transition: border-color 0.3s;
+        }
+        .product-card:hover {
+            border-color: #FFD700;
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: #111;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .product-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .product-price {
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        .buy-btn {
+            background: #006400;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            font-size: 24px;
+            color: #FFD700;
+            margin-top: 100px;
+        }
+        a { color: #FFD700; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><a href="index.html">⚔️ TUATH COIR</a> / SHOP</h1>
+        <div id="cart-count">Cart (0)</div>
+    </header>
+
+    <div id="loading" class="loading">LOADING PRODUCTS...</div>
+    <div id="products" class="product-grid"></div>
+
+    <script>
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+                const container = document.getElementById('products');
+
+                if (data.products && data.products.length > 0) {
+                    data.products.forEach(product => {
+                        const card = document.createElement('div');
+                        card.className = 'product-card';
+                        card.innerHTML = `
+                            <div class="product-image">
+                                ${product.images && product.images.length > 0
+                                    ? `<img src="${product.images[0]}" style="width:100%; height:100%; object-fit:cover;">`
+                                    : 'NO IMAGE'}
+                            </div>
+                            <div class="product-name">${product.name}</div>
+                            <div class="product-price">$${product.price.toFixed(2)}</div>
+                            <button class="buy-btn">ADD TO CART</button>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = '<p>No products available yet. Check back soon!</p>';
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('loading').textContent = 'ERROR LOADING PRODUCTS';
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>

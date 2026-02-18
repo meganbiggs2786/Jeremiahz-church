@@ -1,0 +1,11 @@
+name = "tuath-coir-api"
+main = "worker/index.js"
+compatibility_date = "2024-01-01"
+
+[[ d1_databases ]]
+binding = "DB"
+database_name = "tuath_coir_db"
+database_id = "YOUR_DATABASE_ID_HERE"
+
+[vars]
+NODE_ENV = "production"
